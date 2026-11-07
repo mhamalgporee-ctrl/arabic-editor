@@ -652,7 +652,6 @@ page.addEventListener("input",()=>updateStats());
 async function exportAndCleanFile(blob, filename) {
   const file = new File([blob], filename, { type: blob.type });
   
-  // محاولة المشاركة أو التنزيل للهاتف أو الحاسوب
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: currentTitle });
@@ -660,11 +659,10 @@ async function exportAndCleanFile(blob, filename) {
     } catch (e) {
       if (e.name === "AbortError") {
         status("تم إلغاء المشاركة");
-        return; // إذا ألغى المستخدم المشاركة، لا نحذف الملف من الذاكرة
+        return;
       }
     }
   } else {
-    // التنزيل التقليدي للكمبيوتر والهواتف الداعمة
     const url = URL.createObjectURL(file);
     const link = document.createElement("a");
     link.href = url;
@@ -676,7 +674,6 @@ async function exportAndCleanFile(blob, filename) {
     status("✓ تم تنزيل الملف وحفظه بنجاح");
   }
 
-  // حذف المستند من ذاكرة البرنامج (قاعدة البيانات المؤقتة) وتنظيف الشاشة بناءً على رغبتك
   if (currentId) {
     try {
       await dbDelete(currentId);
@@ -685,7 +682,6 @@ async function exportAndCleanFile(blob, filename) {
     }
   }
   
-  // إعادة ضبط المحرر لمستند جديد نظيف
   resetToBlank();
   status("✓ تم حفظ الملف نهائياً وحذفه من ذاكرة البرنامج المؤقتة");
 }
@@ -712,7 +708,6 @@ async function saveAsImage(split){
    const blob=await toBlob(canvas);
    await exportAndCleanFile(blob, safeName()+".png");
   }else{
-   // في حال تقسيم الصور لعدة صفحات، سنقوم بتنزيل أول صفحة أو تجهيزها
    const pageH=Math.round(canvas.width*1.4142),count=Math.max(1,Math.ceil(canvas.height/pageH));
    for(let i=0;i<count;i++){
     const h=Math.min(pageH,canvas.height-i*pageH),part=document.createElement("canvas");
@@ -750,7 +745,6 @@ async function exportDOCX(){
 async function makePDF(){
  if(!(await flushSave())){alert("تعذر الحفظ.");return}
  window.print();
- // بعد الطباعة أو التصدير كـ PDF عبر المتصفح، نقوم بتفريغ الذاكرة وحذف المستند بناءً على الطلب
  if(confirm("هل تم الحفظ بنجاح وتريد حذف المستند من ذاكرة البرنامج؟")){
   if(currentId) await dbDelete(currentId);
   resetToBlank();
@@ -907,7 +901,7 @@ page.addEventListener("paste",e=>{
 $("imageInput").addEventListener("change",function(){insertImages(this)});
 $("importInput").addEventListener("change",function(){importFile(this)});
 $("pdfInput").addEventListener("change",function(){readPDF(this)});
-$("pdf2wordInput").addEventListener("change",function({pdfToWord(this)}));
+$("pdf2wordInput").addEventListener("change",function(){pdfToWord(this)});
 $("ocrInput").addEventListener("change",function(){runOCR(this)});
 
 /* مغادرة الصفحة */

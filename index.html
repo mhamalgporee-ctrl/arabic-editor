@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#126b55">
+<meta name="description" content="المحرر العربي الاحترافي للمستندات - إعداد محمد علي أحمد">
+<title>المحرر العربي الاحترافي | محمد علي أحمد</title>
+
+<style>
+:root{
+  --bg:#eef2ef;
+  --surface:#fff;
+  --text:#202722;
+  --line:#d5ded8;
+  --accent:#126b55;
+  --accent2:#e5f3ed;
+  --muted:#68756e;
+  --danger:#b83232;
+  --shadow:0 3px 14px #14251b12;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:16px Tahoma,"Segoe UI",Arial,sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+
+.header{
+  background:linear-gradient(135deg,#104e40,#19866b);
+  color:#fff;padding:15px;display:flex;
+  justify-content:space-between;align-items:center;
+  gap:10px;flex-wrap:wrap;
+}
+.header h1{font-size:20px;margin:0 0 5px}
+.header small{opacity:.9}
+.author{text-align:left;font-size:13px;line-height:1.7}
+
+.toolbar{
+  position:sticky;top:0;z-index:50;
+  background:#fffffff2;backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  box-shadow:var(--shadow);padding:7px;
+}
+.tool-section{
+  display:flex;gap:7px;align-items:center;
+  overflow-x:auto;padding:5px 2px 9px;
+  scrollbar-width:thin;
+}
+.tool-section+.tool-section{border-top:1px solid var(--line)}
+.tool-section button,.tool-section select,.tool-label{
+  flex:0 0 auto;min-height:50px;
+  border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--text);
+  padding:9px 13px;font-size:14px;font-weight:700;
+}
+.tool-section button:active{background:var(--accent2);transform:scale(.98)}
+.tool-section .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tool-section .danger{color:var(--danger)}
+.tool-section select{max-width:190px;min-width:110px}
+.tool-label{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tool-label input[type=color]{width:30px;height:30px;border:0;padding:0;background:transparent}
+.tool-label input[type=file]{display:none}
+
+.info{
+  max-width:1100px;margin:12px auto 4px;padding:0 12px;
+  display:flex;justify-content:space-between;gap:8px;
+  flex-wrap:wrap;color:var(--muted);font-size:13px;
+}
+#status{color:var(--accent);font-weight:bold}
+
+.editor-wrap{
+  padding:12px;display:flex;justify-content:center;
+  align-items:flex-start;gap:14px;
+}
+#page{
+  position:relative;background:#fff;color:#111;
+  width:794px;max-width:100%;min-height:1123px;
+  padding:68px 62px;outline:none;
+  box-shadow:0 3px 18px #0002;border:1px solid #ddd;
+  font-size:18px;line-height:1.9;
+  direction:rtl;text-align:right;
+  overflow-wrap:anywhere;word-break:normal;
+}
+#page:empty:before{content:"ابدأ الكتابة هنا...";color:#aaa;pointer-events:none}
+#page p{margin:0 0 10px}
+#page h1{font-size:30px;margin:18px 0}
+#page h2{font-size:25px;margin:16px 0}
+#page h3{font-size:21px;margin:14px 0}
+#page img{
+  max-width:100%;height:auto;display:block;
+  margin:14px auto;cursor:pointer;
+}
+#page table{width:100%;border-collapse:collapse;margin:15px 0;table-layout:auto}
+#page td,#page th{border:1px solid #555;padding:8px;min-width:35px}
+#page th{background:#e8eee9;font-weight:bold}
+#page .box{padding:15px;border:2px solid #555;border-radius:8px;margin:15px 0}
+#page blockquote{
+  border-right:4px solid var(--accent);margin:15px 0;
+  padding:10px 15px;background:#f2f5f2;
+}
+#page ul,#page ol{padding-right:30px}
+#page hr{border:0;border-top:2px solid #555;margin:22px 0}
+#page .page-break{
+  break-after:page;page-break-after:always;
+  border-top:2px dashed #aaa;margin:28px 0;height:1px;
+}
+#page img.selected-image{outline:3px solid #16866b}
+
+.stats,.panel{
+  max-width:900px;width:calc(100% - 24px);
+  margin:10px auto;background:#fff;
+  border:1px solid var(--line);border-radius:12px;
+  padding:13px;box-shadow:var(--shadow);
+}
+.stats{
+  display:flex;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;font-size:14px;
+}
+.panel h3{margin:0 0 12px}
+.panel input,.panel textarea,.panel select{
+  width:100%;padding:12px;border:1px solid var(--line);
+  border-radius:10px;background:#f8faf8;
+  margin:5px 0;min-height:46px;
+}
+.panel textarea{min-height:150px;line-height:1.8}
+.panel button{
+  min-height:48px;padding:10px 15px;
+  border:1px solid var(--line);background:#fff;
+  border-radius:10px;margin:4px;font-weight:bold;
+}
+.row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
+[hidden]{display:none!important}
+
+.modal-backdrop{
+  position:fixed;inset:0;background:#0008;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:15px;
+}
+.modal{
+  background:#fff;border-radius:16px;padding:18px;
+  width:min(520px,100%);max-height:85vh;overflow:auto;
+  box-shadow:0 10px 40px #0004;
+}
+.modal h3{margin-top:0}
+.modal input,.modal select{
+  width:100%;min-height:48px;padding:10px;
+  border:1px solid var(--line);border-radius:9px;margin:5px 0;
+}
+.doc-item{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:8px;padding:10px;
+  border-bottom:1px solid var(--line);
+}
+.doc-item button{min-height:42px}
+.modal button{min-height:44px;padding:8px 12px;border-radius:9px}
+
+@media(max-width:600px){
+  .header{padding:12px}
+  .header h1{font-size:17px}
+  .toolbar{padding:5px}
+  .tool-section button,.tool-section select,.tool-label{
+    min-height:54px;font-size:14px;padding:10px 13px;
+  }
+  .editor-wrap{padding:6px}
+  #page{min-height:900px;padding:28px 19px;font-size:18px}
+  .stats{font-size:13px}
+  .doc-item{align-items:flex-start;flex-direction:column}
+}
+
+@media print{
+  @page{size:A4;margin:15mm}
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  .header,.toolbar,.info,.stats,.panel,.footer,.modal-backdrop{display:none!important}
+  .editor-wrap{display:block!important;padding:0!important;margin:0!important}
+  #page{
+    width:auto!important;max-width:none!important;min-height:0!important;
+    padding:0!important;margin:0!important;border:0!important;
+    box-shadow:none!important;overflow:visible!important;
+    background:#fff!important;
+  }
+  #page img,#page table,#page .box,#page blockquote{
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  #page .page-break{
+    border:0!important;margin:0!important;height:0!important;
+  }
+  #page img.selected-image{outline:none!important}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div>
+    <h1>✍️ المحرر العربي الاحترافي</h1>
+    <small>كتابة وتنسيق وإدارة المستندات</small>
+  </div>
+  <div class="author">
+    إعداد وتطوير<br>
+    <b>محمد علي أحمد</b>
+  </div>
+</header>
+
+<nav class="toolbar" aria-label="أدوات التحرير">
+
+  <div class="tool-section">
+    <button class="primary" onclick="newDocument()">＋ مستند جديد</button>
+    <button onclick="openDocuments()">📚 مستنداتي</button>
+    <button onclick="saveNow()">💾 حفظ</button>
+    <button onclick="renameDocument()">✏️ تسمية</button>
+    <button class="primary" onclick="exportDOCX()">📝 تصدير Word</button>
+    <button class="primary" onclick="makePDF()">📄 تصدير PDF</button>
+    <button onclick="exportHTML()">🌐 HTML</button>
+    <button onclick="exportTXT()">📃 TXT</button>
+    <button class="danger" onclick="clearDocument()">🗑 مسح المحتوى</button>
+  </div>
+
+  <div class="tool-section">
+    <button onclick="cmd('bold')"><b>غامق</b></button>
+    <button onclick="cmd('italic')"><i>مائل</i></button>
+    <button onclick="cmd('underline')"><u>تسطير</u></button>
+    <button onclick="cmd('strikeThrough')">يتوسطه خط</button>
+    <button onclick="cmd('superscript')">مرتفع</button>
+    <button onclick="cmd('subscript')">منخفض</button>
+    <button onclick="cmd('removeFormat')">إزالة التنسيق</button>
+    <button onclick="undo()">↶ تراجع</button>
+    <button onclick="redo()">↷ إعادة</button>
+  </div>
+
+  <div class="tool-section">
+    <select onchange="setFont(this.value);this.selectedIndex=0">
+      <option value="">نوع الخط</option>
+      <option>Tahoma</option>
+      <option>Arial</option>
+      <option>Traditional Arabic</option>
+      <option>Simplified Arabic</option>
+      <option>Georgia</option>
+      <option>Times New Roman</option>
+      <option>Courier New</option>
+    </select>
+
+    <select onchange="setSize(this.value);this.selectedIndex=0">
+      <option value="">حجم الخط</option>
+      <option value="12px">12 صغير</option>
+      <option value="14px">14</option>
+      <option value="16px">16 عادي</option>
+      <option value="18px">18</option>
+      <option value="20px">20</option>
+      <option value="24px">24 كبير</option>
+      <option value="28px">28</option>
+      <option value="32px">32 عنوان</option>
+      <option value="40px">40</option>
+      <option value="48px">48 ضخم</option>
+    </select>
+
+    <label class="tool-label">
+      لون الخط
+      <input type="color" value="#222222" oninput="applyColor('foreColor',this.value)">
+    </label>
+
+    <label class="tool-label">
+      تمييز
+      <input type="color" value="#fff176" oninput="applyColor('hiliteColor',this.value)">
+    </label>
+
+    <label class="tool-label">
+      لون الصفحة
+      <input type="color" value="#ffffff" onchange="setPageColor(this.value)">
+    </label>
+  </div>
+
+  <div class="tool-section">
+    <button onclick="align('right')">يمين</button>
+    <button onclick="align('center')">وسط</button>
+    <button onclick="align('left')">يسار</button>
+    <button onclick="align('justify')">ضبط النص</button>
+    <button onclick="cmd('insertUnorderedList')">• نقطية</button>
+    <button onclick="cmd('insertOrderedList')">١. رقمية</button>
+    <button onclick="cmd('indent')">زيادة المسافة</button>
+    <button onclick="cmd('outdent')">تقليل المسافة</button>
+    <button onclick="setDirection('rtl')">اتجاه عربي</button>
+    <button onclick="setDirection('ltr')">اتجاه إنجليزي</button>
+  </div>
+
+  <div class="tool-section">
+    <button onclick="heading('h1')">عنوان رئيسي</button>
+    <button onclick="heading('h2')">عنوان فرعي</button>
+    <button onclick="heading('h3')">عنوان صغير</button>
+    <button onclick="insertLine()">خط فاصل</button>
+    <button onclick="insertBox()">مربع نص</button>
+    <button onclick="insertQuote()">اقتباس</button>
+    <button onclick="insertTable()">📊 جدول</button>
+    <button onclick="addTableRow()">＋ صف</button>
+    <button onclick="addTableColumn()">＋ عمود</button>
+    <button onclick="insertPageBreak()">فاصل صفحة</button>
+    <button onclick="insertImagePicker()">📷 صورة</button>
+    <input id="imageInput" type="file" accept="image/*" multiple hidden onchange="insertImages(this)">
+  </div>
+
+  <div class="tool-section">
+    <select id="paperSize" onchange="setPaper(this.value)">
+      <option value="A4">ورق A4</option>
+      <option value="A5">ورق A5</option>
+      <option value="Letter">Letter</option>
+    </select>
+
+    <select id="pagePattern" onchange="setPattern(this.value)">
+      <option value="none">بدون نقش</option>
+      <option value="dots">نقاط</option>
+      <option value="lines">خطوط</option>
+      <option value="grid">مربعات</option>
+    </select>
+
+    <select id="frameStyle" onchange="setFrame(this.value)">
+      <option value="">إطار الصفحة</option>
+      <option value="none">بدون</option>
+      <option value="2px solid #333">عادي</option>
+      <option value="5px double #333">مزدوج</option>
+      <option value="3px dashed #333">متقطع</option>
+    </select>
+
+    <button onclick="setMargins()">هوامش الصفحة</button>
+    <button onclick="insertHeaderFooter()">رأس وتذييل</button>
+    <button onclick="insertPageNumber()">رقم صفحة</button>
+    <button onclick="openFind()">بحث واستبدال</button>
+
+    <button onclick="$('importInput').click()">استيراد ملف</button>
+    <input id="importInput" type="file" accept=".txt,.html,.htm,.pdf" hidden onchange="importFile(this)">
+
+    <button onclick="$('pdfInput').click()">قراءة PDF</button>
+    <input id="pdfInput" type="file" accept="application/pdf" hidden onchange="readPDF(this)">
+
+    <button onclick="$('ocrInput').click()">OCR صورة</button>
+    <input id="ocrInput" type="file" accept="image/*" hidden onchange="runOCR(this)">
+
+    <button onclick="window.print()">🖨 طباعة</button>
+  </div>
+
+  <div class="tool-section">
+    <button onclick="resizeSelectedImage(0.9)">تصغير الصورة</button>
+    <button onclick="resizeSelectedImage(1.1)">تكبير الصورة</button>
+    <button onclick="alignSelectedImage('right')">الصورة يمين</button>
+    <button onclick="alignSelectedImage('center')">الصورة وسط</button>
+    <button onclick="alignSelectedImage('left')">الصورة يسار</button>
+    <button onclick="deleteSelectedImage()">حذف الصورة المحددة</button>
+    <button onclick="showExtractPanel()">النص المستخرج</button>
+  </div>
+
+</nav>
+
+<div class="info">
+  <span id="docTitle">مستند جديد</span>
+  <span id="status">الحفظ التلقائي جاهز</span>
+</div>
+
+<main class="editor-wrap">
+  <div id="page" contenteditable="true" spellcheck="true" dir="rtl"
+       aria-label="مساحة كتابة المستند">
+    <p>بسم الله الرحمن الرحيم</p>
+    <p>ابدأ الكتابة هنا...</p>
+  </div>
+</main>
+
+<div class="stats">
+  <span>الكلمات: <b id="words">0</b></span>
+  <span>الحروف: <b id="chars">0</b></span>
+  <span>الفقرات: <b id="paragraphs">0</b></span>
+  <span>الصور: <b id="imagesCount">0</b></span>
+</div>
+
+<section class="panel" id="extractPanel" hidden>
+  <h3>النص المستخرج / OCR</h3>
+  <p id="extractStatus">يمكن استخراج نص PDF أو التعرف على النص داخل صورة.</p>
+  <textarea id="extractedText" dir="auto" placeholder="سيظهر النص هنا..."></textarea>
+  <div class="row">
+    <button onclick="moveExtractedToEditor()">نقل النص للمحرر</button>
+    <button onclick="downloadExtracted()">تنزيل TXT</button>
+    <button onclick="$('extractPanel').hidden=true">إغلاق</button>
+  </div>
+</section>
+
+<footer class="footer">
+  <b>المحرر العربي الاحترافي للمستندات</b>
+  <p>تصميم وإعداد وتطوير: محمد علي أحمد</p>
+  <p>إهداء مجاني لجميع المستخدمين</p>
+</footer>
+
+<div id="modalHost"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+"use strict";
+
+const page = $("page");
+const DB_NAME = "ArabicProDocsDB";
+const DB_STORE = "documents";
+
+let currentId = null;
+let currentTitle = "مستند جديد";
+let savedRange = null;
+let saveTimer = null;
+let selectedImage = null;
+let saving = false;
+let saveAgain = false;
+let lastSearchIndex = -1;
+
+let pageConfig = {
+  size: "A4",
+  margin: 15,
+  pattern: "none",
+  frame: "",
+  color: "#ffffff",
+  direction: "rtl"
+};
+
+const $ = id => document.getElementById(id);
+
+function status(message) {
+  $("status").textContent = message;
+}
+
+function esc(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function safeName() {
+  return (currentTitle || "مستندي").replace(/[\\/:*?"<>|]/g, "_");
+}
+
+/* تنظيف HTML المستورد والمحمل */
+function sanitizeHTML(html) {
+  const doc = new DOMParser().parseFromString(String(html), "text/html");
+
+  doc.querySelectorAll(
+    "script,iframe,object,embed,form,link,meta,base,style"
+  ).forEach(el => el.remove());
+
+  doc.querySelectorAll("*").forEach(el => {
+    [...el.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim();
+
+      if (name.startsWith("on") || name === "srcdoc") {
+        el.removeAttribute(attr.name);
+      }
+
+      if (
+        ["href","src","xlink:href","formaction"].includes(name) &&
+        /^(javascript|vbscript|data:text\/html):/i.test(value)
+      ) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return doc.body.innerHTML;
+}
+
+/* قاعدة البيانات */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error("التخزين المحلي غير مدعوم"));
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, {keyPath:"id"});
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function dbPut(doc) {
+  const db = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, "readwrite");
+    tx.objectStore(DB_STORE).put(doc);
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error || new Error("فشل التخزين"));
+    };
+  });
+}
+
+async function dbAll() {
+  const db = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(DB_STORE).objectStore(DB_STORE).getAll();
+
+    request.onsuccess = () => {
+      db.close();
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      db.close();
+      reject(request.error);
+    };
+  });
+}
+
+async function dbDelete(id) {
+  const db = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, "readwrite");
+    tx.objectStore(DB_STORE).delete(id);
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+}
+
+/* إعدادات الصفحة */
+function applyPageConfig() {
+  const widths = {A4:"794px", A5:"559px", Letter:"816px"};
+
+  page.style.width = widths[pageConfig.size] || widths.A4;
+  page.style.padding = Math.round((pageConfig.margin || 15) * 3.78) + "px";
+  page.style.backgroundColor = pageConfig.color || "#ffffff";
+  page.style.border = pageConfig.frame || "1px solid #ddd";
+  page.dir = pageConfig.direction || "rtl";
+  page.style.direction = pageConfig.direction || "rtl";
+  page.style.textAlign = pageConfig.direction === "ltr" ? "left" : "right";
+
+  $("paperSize").value = pageConfig.size || "A4";
+  $("pagePattern").value = pageConfig.pattern || "none";
+  $("frameStyle").value = pageConfig.frame || "";
+
+  setPattern(pageConfig.pattern || "none", false);
+}
+
+function setPageColor(color) {
+  pageConfig.color = color;
+  page.style.backgroundColor = color;
+  scheduleSave();
+}
+
+function setPaper(size) {
+  pageConfig.size = size;
+  applyPageConfig();
+  scheduleSave();
+}
+
+function setMargins() {
+  const value = prompt(
+    "الهامش بالملليمتر (10 إلى 40):",
+    String(pageConfig.margin || 15)
+  );
+
+  if (value === null) return;
+
+  const margin = Number(value);
+
+  if (!Number.isFinite(margin) || margin < 10 || margin > 40) {
+    alert("أدخل رقماً من 10 إلى 40.");
+    return;
+  }
+
+  pageConfig.margin = margin;
+  applyPageConfig();
+  scheduleSave();
+}
+
+function setPattern(type, save = true) {
+  const patterns = {
+    none: "none",
+    dots: "radial-gradient(#00000025 1px,transparent 1px)",
+    lines: "repeating-linear-gradient(transparent,transparent 31px,#00000018 32px)",
+    grid: "linear-gradient(#00000018 1px,transparent 1px),linear-gradient(90deg,#00000018 1px,transparent 1px)"
+  };
+
+  pageConfig.pattern = type;
+  page.style.backgroundImage = patterns[type] || "none";
+  page.style.backgroundSize =
+    type === "dots" ? "18px 18px" :
+    type === "grid" ? "24px 24px" : "auto";
+
+  if (save) scheduleSave();
+}
+
+function setFrame(value) {
+  pageConfig.frame = value === "none" ? "0" : value;
+  page.style.border = pageConfig.frame || "1px solid #ddd";
+  scheduleSave();
+}
+
+/* الحفظ */
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  status("جارٍ حفظ التغييرات...");
+  saveTimer = setTimeout(() => saveNow(true), 800);
+}
+
+async function saveNow(silent = false) {
+  clearTimeout(saveTimer);
+
+  if (saving) {
+    saveAgain = true;
+    return;
+  }
+
+  saving = true;
+
+  try {
+    if (!currentId) {
+      currentId = "doc_" + Date.now() + "_" +
+        Math.random().toString(36).slice(2, 9);
+    }
+
+    const doc = {
+      id: currentId,
+      title: currentTitle,
+      html: page.innerHTML,
+      config: {...pageConfig},
+      updated: Date.now()
+    };
+
+    await dbPut(doc);
+
+    status("✓ تم الحفظ على هذا الجهاز");
+
+    if (!silent) alert("تم حفظ المستند بنجاح.");
+  } catch (error) {
+    console.error(error);
+    status("تعذر الحفظ؛ تحقق من مساحة التخزين");
+
+    if (!silent) {
+      alert("تعذر حفظ المستند. قد تكون مساحة الجهاز ممتلئة، خصوصاً إذا احتوى على صور كبيرة.");
+    }
+  } finally {
+    saving = false;
+
+    if (saveAgain) {
+      saveAgain = false;
+      scheduleSave();
+    }
+  }
+}
+
+async function flushSave() {
+  clearTimeout(saveTimer);
+  await saveNow(true);
+}
+
+async function newDocument() {
+  if (!confirm("إنشاء مستند جديد؟ سيتم حفظ المستند الحالي أولاً.")) return;
+
+  await flushSave();
+
+  currentId = null;
+  currentTitle = "مستند جديد";
+  page.innerHTML = "<p><br></p>";
+  pageConfig = {
+    size:"A4", margin:15, pattern:"none",
+    frame:"", color:"#ffffff", direction:"rtl"
+  };
+
+  resetSelection();
+  applyPageConfig();
+  $("docTitle").textContent = currentTitle;
+  updateStats(false);
+  status("مستند جديد - لم يتم الحفظ بعد");
+  window.scrollTo(0, 0);
+}
+
+async function renameDocument() {
+  const name = prompt("اكتب اسم المستند:", currentTitle);
+  if (name === null || !name.trim()) return;
+
+  currentTitle = name.trim();
+  $("docTitle").textContent = currentTitle;
+  await saveNow(true);
+  status("تم تغيير اسم المستند وحفظه");
+}
+
+async function clearDocument() {
+  if (!confirm("هل تريد مسح محتوى المستند الحالي؟ لا يمكن التراجع عن هذا الإجراء بعد الحفظ.")) return;
+
+  page.innerHTML = "<p><br></p>";
+  resetSelection();
+  updateStats();
+}
+
+/* إدارة المستندات */
+async function openDocuments() {
+  try {
+    await flushSave();
+
+    const docs = (await dbAll()).sort((a,b) => b.updated - a.updated);
+
+    let html = '<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">' +
+      '<div class="modal"><h3>📚 مستنداتي المحفوظة</h3>';
+
+    if (!docs.length) {
+      html += "<p>لا توجد مستندات محفوظة بعد.</p>";
+    }
+
+    docs.forEach(doc => {
+      html += `
+        <div class="doc-item">
+          <div>
+            <b>${esc(doc.title || "مستند بلا اسم")}</b><br>
+            <small>${new Date(doc.updated).toLocaleString("ar-IQ")}</small>
+          </div>
+          <div class="row">
+            <button onclick="loadDocument('${esc(doc.id)}')">فتح</button>
+            <button onclick="deleteDocument('${esc(doc.id)}')">حذف</button>
+          </div>
+        </div>`;
+    });
+
+    html += '<div class="row"><button onclick="closeModal()">إغلاق</button></div></div></div>';
+    $("modalHost").innerHTML = html;
+  } catch (error) {
+    console.error(error);
+    alert("تعذر فتح قائمة المستندات.");
+  }
+}
+
+function closeModal() {
+  $("modalHost").innerHTML = "";
+}
+
+async function loadDocument(id) {
+  try {
+    await flushSave();
+
+    const docs = await dbAll();
+    const doc = docs.find(item => item.id === id);
+    if (!doc) {
+      alert("لم يتم العثور على المستند.");
+      return;
+    }
+
+    currentId = doc.id;
+    currentTitle = doc.title || "مستند بلا اسم";
+    page.innerHTML = sanitizeHTML(doc.html || "");
+    pageConfig = doc.config || {
+      size:"A4", margin:15, pattern:"none",
+      frame:"", color:"#ffffff", direction:"rtl"
+    };
+
+    applyPageConfig();
+    resetSelection();
+    $("docTitle").textContent = currentTitle;
+    closeModal();
+    updateStats(false);
+    status("تم فتح المستند المحفوظ");
+    window.scrollTo(0, 0);
+  } catch (error) {
+    console.error(error);
+    alert("تعذر فتح المستند.");
+  }
+}
+
+async function deleteDocument(id) {
+  if (!confirm("هل تريد حذف هذا المستند نهائياً؟")) return;
+
+  try {
+    await dbDelete(id);
+
+    if (currentId === id) {
+      currentId = null;
+      currentTitle = "مستند جديد";
+      page.innerHTML = "<p><br></p>";
+      $("docTitle").textContent = currentTitle;
+      resetSelection();
+      updateStats(false);
+    }
+
+    openDocuments();
+  } catch (error) {
+    alert("تعذر حذف المستند.");
+  }
+}
+
+/* تحديد النص */
+function resetSelection() {
+  savedRange = null;
+  selectedImage = null;
+  page.querySelectorAll("img").forEach(img => img.classList.remove("selected-image"));
+}
+
+document.addEventListener("selectionchange", () => {
+  const selection = window.getSelection();
+
+  if (
+    selection &&
+    selection.rangeCount &&
+    page.contains(selection.anchorNode) &&
+    page.contains(selection.focusNode)
+  ) {
+    savedRange = selection.getRangeAt(0).cloneRange();
+  }
+});
+
+function restoreSelection() {
+  page.focus();
+
+  if (savedRange) {
+    try {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    } catch (error) {
+      savedRange = null;
+    }
+  }
+}
+
+function cmd(command, value = null) {
+  restoreSelection();
+  document.execCommand("styleWithCSS", false, true);
+  document.execCommand(command, false, value);
+  updateStats();
+}
+
+function applyColor(command, color) {
+  cmd(command, color);
+}
+
+function setFont(font) {
+  if (font) cmd("fontName", font);
+}
+
+function setSize(size) {
+  if (!size) return;
+
+  restoreSelection();
+
+  const selection = window.getSelection();
+
+  if (!selection || selection.isCollapsed) {
+    alert("حدد النص أولاً ثم اختر حجمه.");
+    return;
+  }
+
+  const span = document.createElement("span");
+  span.style.fontSize = size;
+
+  try {
+    const contents = selection.getRangeAt(0).extractContents();
+    span.appendChild(contents);
+    selection.getRangeAt(0).insertNode(span);
+
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } catch (error) {
+    document.execCommand("fontSize", false, "5");
+  }
+
+  updateStats();
+}
+
+function undo() { cmd("undo"); }
+function redo() { cmd("redo"); }
+function heading(type) { cmd("formatBlock", type); }
+
+function align(value) {
+  const commands = {
+    right:"justifyRight",
+    left:"justifyLeft",
+    center:"justifyCenter",
+    justify:"justifyFull"
+  };
+  cmd(commands[value] || "justifyRight");
+}
+
+function setDirection(direction) {
+  pageConfig.direction = direction;
+  page.dir = direction;
+  page.style.direction = direction;
+  page.style.textAlign = direction === "rtl" ? "right" : "left";
+  scheduleSave();
+}
+
+function insertHTML(html) {
+  restoreSelection();
+  document.execCommand("insertHTML", false, html);
+  updateStats();
+}
+
+function insertLine() {
+  insertHTML("<hr><p><br></p>");
+}
+
+function insertBox() {
+  insertHTML('<div class="box" style="background:#e8f5e9">اكتب النص داخل المربع</div><p><br></p>');
+}
+
+function insertQuote() {
+  insertHTML("<blockquote>اكتب الاقتباس هنا</blockquote><p><br></p>");
+}
+
+/* الجداول */
+function insertTable() {
+  const rows = Number(prompt("عدد الصفوف (1-40):", "3"));
+  if (!Number.isInteger(rows) || rows < 1 || rows > 40) {
+    alert("عدد الصفوف غير صحيح.");
+    return;
+  }
+
+  const cols = Number(prompt("عدد الأعمدة (1-20):", "3"));
+  if (!Number.isInteger(cols) || cols < 1 || cols > 20) {
+    alert("عدد الأعمدة غير صحيح.");
+    return;
+  }
+
+  let html = "<table><tbody>";
+
+  for (let i = 0; i < rows; i++) {
+    html += "<tr>";
+
+    for (let j = 0; j < cols; j++) {
+      html += i === 0
+        ? "<th>عنوان</th>"
+        : "<td>اكتب هنا</td>";
+    }
+
+    html += "</tr>";
+  }
+
+  insertHTML(html + "</tbody></table><p><br></p>");
+}
+
+function selectedCell() {
+  const selection = window.getSelection();
+  let node = selection && selection.anchorNode;
+
+  if (node && node.nodeType === 3) node = node.parentElement;
+
+  return node && node.closest ? node.closest("td,th") : null;
+}
+
+function addTableRow() {
+  const cell = selectedCell();
+
+  if (!cell) {
+    alert("ضع المؤشر داخل خلية جدول أولاً.");
+    return;
+  }
+
+  const row = cell.parentElement;
+  const clone = row.cloneNode(true);
+
+  clone.querySelectorAll("td,th").forEach(item => {
+    item.textContent = "اكتب هنا";
+  });
+
+  row.after(clone);
+  updateStats();
+}
+
+function addTableColumn() {
+  const cell = selectedCell();
+
+  if (!cell) {
+    alert("ضع المؤشر داخل خلية جدول أولاً.");
+    return;
+  }
+
+  const table = cell.closest("table");
+  const index = [...cell.parentElement.children].indexOf(cell);
+
+  table.querySelectorAll("tr").forEach((row, i) => {
+    const newCell = document.createElement(i === 0 ? "th" : "td");
+    newCell.textContent = i === 0 ? "عنوان" : "اكتب هنا";
+    row.insertBefore(newCell, row.children[index + 1] || null);
+  });
+
+  updateStats();
+}
+
+/* الصور */
+function insertImagePicker() {
+  restoreSelection();
+  $("imageInput").click();
+}
+
+function insertImages(input) {
+  const files = [...(input.files || [])];
+
+  files.forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert("حجم الصورة أكبر من 8 ميغابايت، تم تجاوزها.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      insertHTML(
+        '<img src="' + reader.result + '" alt="' + esc(file.name) + '">' +
+        "<p><br></p>"
+      );
+    };
+
+    reader.onerror = () => alert("تعذرت قراءة الصورة.");
+    reader.readAsDataURL(file);
+  });
+
+  input.value = "";
+}
+
+page.addEventListener("click", event => {
+  if (event.target.tagName === "IMG") {
+    page.querySelectorAll("img").forEach(img => {
+      img.classList.remove("selected-image");
+    });
+
+    selectedImage = event.target;
+    selectedImage.classList.add("selected-image");
+  } else if (!event.target.closest("button")) {
+    if (selectedImage) selectedImage.classList.remove("selected-image");
+    selectedImage = null;
+  }
+});
+
+function resizeSelectedImage(factor) {
+  if (!selectedImage) {
+    alert("المس الصورة أولاً لتحديدها.");
+    return;
+  }
+
+  const currentWidth = selectedImage.getBoundingClientRect().width;
+  const maxWidth = page.clientWidth - 30;
+  const newWidth = Math.max(40, Math.min(maxWidth, currentWidth * factor));
+
+  selectedImage.style.width = newWidth + "px";
+  selectedImage.style.height = "auto";
+  scheduleSave();
+}
+
+function alignSelectedImage(direction) {
+  if (!selectedImage) {
+    alert("حدد صورة أولاً.");
+    return;
+  }
+
+  selectedImage.style.display = "block";
+
+  if (direction === "center") {
+    selectedImage.style.margin = "14px auto";
+  } else if (direction === "right") {
+    selectedImage.style.margin = "14px auto 14px 0";
+  } else {
+    selectedImage.style.margin = "14px 0 14px auto";
+  }
+
+  scheduleSave();
+}
+
+function deleteSelectedImage() {
+  if (!selectedImage) {
+    alert("حدد صورة أولاً.");
+    return;
+  }
+
+  selectedImage.remove();
+  selectedImage = null;
+  updateStats();
+}
+
+/* الرأس والتذييل والفواصل */
+function insertHeaderFooter() {
+  insertHTML(
+    '<div style="border-bottom:1px solid #777;text-align:center;padding-bottom:8px;margin-bottom:20px">' +
+    "اكتب ترويسة المستند</div><p><br></p>" +
+    '<div style="border-top:1px solid #777;text-align:center;padding-top:8px;margin-top:20px">' +
+    "اكتب تذييل المستند</div>"
+  );
+}
+
+function insertPageNumber() {
+  insertHTML(
+    '<span contenteditable="false" style="display:inline-block;border:1px solid #aaa;padding:2px 8px">' +
+    "رقم الصفحة (يدوي)</span>"
+  );
+}
+
+function insertPageBreak() {
+  insertHTML('<div class="page-break" contenteditable="false"></div><p><br></p>');
+}
+
+/* الإحصائيات */
+function updateStats(save = true) {
+  const text = page.innerText || "";
+  const trimmed = text.trim();
+
+  $("words").textContent = trimmed ? trimmed.split(/\s+/).length : 0;
+  $("chars").textContent = text.replace(/\s/g, "").length;
+  $("paragraphs").textContent = page.querySelectorAll("p,h1,h2,h3,li").length;
+  $("imagesCount").textContent = page.querySelectorAll("img").length;
+
+  if (save) scheduleSave();
+}
+
+page.addEventListener("input", () => updateStats());
+
+/* التصدير والتنزيل */
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function safeHTML() {
+  return sanitizeHTML(page.innerHTML);
+}
+
+function exportTXT() {
+  download(
+    new Blob([page.innerText], {type:"text/plain;charset=utf-8"}),
+    safeName() + ".txt"
+  );
+}
+
+function exportHTML() {
+  const html =
+    '<!doctype html><html lang="ar" dir="rtl"><head>' +
+    '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    "<title>" + esc(currentTitle) + "</title>" +
+    "<style>body{font:18px Tahoma,Arial;line-height:1.9;direction:rtl;padding:30px}" +
+    "img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}" +
+    "td,th{border:1px solid #555;padding:8px}.box{padding:15px;border:2px solid #555}" +
+    "</style></head><body>" + safeHTML() + "</body></html>";
+
+  download(
+    new Blob([html], {type:"text/html;charset=utf-8"}),
+    safeName() + ".html"
+  );
+}
+
+async function exportDOCX() {
+  if (typeof htmlDocx === "undefined") {
+    alert("مكتبة Word لم تُحمّل. تحقق من اتصال الإنترنت.");
+    return;
+  }
+
+  try {
+    const body =
+      '<!doctype html><html><head><meta charset="utf-8"></head>' +
+      '<body dir="rtl">' + safeHTML() + "</body></html>";
+
+    const blob = htmlDocx.asBlob(body, {
+      orientation:"portrait",
+      margins:{top:850,right:850,bottom:850,left:850}
+    });
+
+    download(blob, safeName() + ".docx");
+  } catch (error) {
+    console.error(error);
+    alert("تعذر إنشاء ملف Word. جرّب تصدير HTML أو PDF.");
+  }
+}
+
+function makePDF() {
+  flushSave().finally(() => window.print());
+}
+
+/* البحث والاستبدال */
+function showModal(content) {
+  $("modalHost").innerHTML =
+    '<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">' +
+    '<div class="modal">' + content + "</div></div>";
+}
+
+function openFind() {
+  lastSearchIndex = -1;
+
+  showModal(
+    "<h3>بحث واستبدال</h3>" +
+    "<label>النص المراد البحث عنه</label>" +
+    '<input id="findQ" placeholder="اكتب كلمة أو عبارة للبحث">' +
+    "<label>استبداله بـ</label>" +
+    '<input id="replaceQ" placeholder="النص الجديد">' +
+    '<div class="row">' +
+    '<button onclick="findText()">بحث عن التالي</button>' +
+    '<button onclick="replaceText()">استبدال المحدد</button>' +
+    '<button onclick="replaceAll()">استبدال الكل</button>' +
+    '<button onclick="closeModal()">إغلاق</button>' +
+    "</div>"
+  );
+}
+
+function findText() {
+  const query = $("findQ").value;
+
+  if (!query) {
+    alert("اكتب النص الذي تريد البحث عنه.");
+    return;
+  }
+
+  const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+
+  while ((node = walker.nextNode())) {
+    nodes.push(node);
+  }
+
+  const matches = [];
+
+  nodes.forEach(textNode => {
+    let start = 0;
+    while (true) {
+      const index = textNode.textContent.indexOf(query, start);
+      if (index < 0) break;
+
+      matches.push({node:textNode, start:index, end:index + query.length});
+      start = index + query.length;
+    }
+  });
+
+  if (!matches.length) {
+    alert("لم يتم العثور على النص.");
+    return;
+  }
+
+  lastSearchIndex = (lastSearchIndex + 1) % matches.length;
+
+  const match = matches[lastSearchIndex];
+  const range = document.createRange();
+
+  range.setStart(match.node, match.start);
+  range.setEnd(match.node, match.end);
+
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  savedRange = range.cloneRange();
+  page.focus();
+
+  if (match.node.parentElement.scrollIntoView) {
+    match.node.parentElement.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+
+  status("نتيجة " + (lastSearchIndex + 1) + " من " + matches.length);
+}
+
+function replaceText() {
+  const selection = window.getSelection();
+
+  if (!selection || selection.isCollapsed || !page.contains(selection.anchorNode)) {
+    alert("ابحث عن النص وحدده أولاً.");
+    return;
+  }
+
+  document.execCommand("insertText", false, $("replaceQ").value);
+  updateStats();
+}
+
+function replaceAll() {
+  const query = $("findQ").value;
+  const replacement = $("replaceQ").value;
+
+  if (!query) {
+    alert("اكتب النص المراد استبداله.");
+    return;
+  }
+
+  const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+
+  while ((node = walker.nextNode())) nodes.push(node);
+
+  let count = 0;
+
+  nodes.forEach(textNode => {
+    const parent = textNode.parentElement;
+
+    if (parent && parent.closest("script,style")) return;
+
+    const pieces = textNode.textContent.split(query);
+
+    if (pieces.length > 1) {
+      count += pieces.length - 1;
+      textNode.textContent = pieces.join(replacement);
+    }
+  });
+
+  updateStats();
+  alert("تم استبدال " + count + " موضعاً.");
+}
+
+/* استيراد الملفات */
+async function importFile(input) {
+  const file = input.files[0];
+  input.value = "";
+
+  if (!file) return;
+
+  if (!confirm("سيتم استبدال محتوى الصفحة الحالية بالمحتوى المستورد. هل تريد المتابعة؟")) {
+    return;
+  }
+
+  try {
+    if (/\.txt$/i.test(file.name)) {
+      const text = await file.text();
+
+      page.innerHTML = text.split(/\r?\n/)
+        .map(line => "<p>" + (esc(line) || "<br>") + "</p>")
+        .join("");
+    } else if (/\.html?$/i.test(file.name)) {
+      const doc = new DOMParser().parseFromString(await file.text(), "text/html");
+      page.innerHTML = sanitizeHTML(doc.body.innerHTML);
+    } else if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+      await extractPDF(file);
+      return;
+    } else {
+      alert("نوع الملف غير مدعوم.");
+      return;
+    }
+
+    resetSelection();
+    updateStats();
+    status("تم استيراد الملف");
+  } catch (error) {
+    console.error(error);
+    alert("تعذر استيراد الملف.");
+  }
+}
+
+/* قراءة PDF */
+function showExtractPanel() {
+  $("extractPanel").hidden = false;
+  $("extractPanel").scrollIntoView({behavior:"smooth"});
+}
+
+async function readPDF(input) {
+  const file = input.files[0];
+  input.value = "";
+  if (file) await extractPDF(file);
+}
+
+async function extractPDF(file) {
+  showExtractPanel();
+  $("extractStatus").textContent = "جارٍ تحميل قارئ PDF...";
+  $("extractedText").value = "";
+
+  try {
+    if (!window.pdfjsLib) throw new Error("PDF.js غير متاحة");
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const pdf = await pdfjsLib.getDocument({
+      data: await file.arrayBuffer()
+    }).promise;
+
+    const allPages = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pdfPage = await pdf.getPage(i);
+      const content = await pdfPage.getTextContent();
+
+      const items = content.items.filter(item => item.str);
+      let lines = [];
+      let currentLine = [];
+      let lastY = null;
+
+      items.forEach(item => {
+        const y = item.transform[5];
+
+        if (lastY !== null && Math.abs(y - lastY) > 4) {
+          lines.push(currentLine.join(" "));
+          currentLine = [];
+        }
+
+        currentLine.push(item.str);
+        lastY = y;
+
+        if (item.hasEOL) {
+          lines.push(currentLine.join(" "));
+          currentLine = [];
+          lastY = null;
+        }
+      });
+
+      if (currentLine.length) lines.push(currentLine.join(" "));
+
+      allPages.push(lines.join("\n"));
+      $("extractStatus").textContent =
+        "استخراج الصفحة " + i + " من " + pdf.numPages;
+    }
+
+    $("extractedText").value = allPages.join("\n\n");
+    $("extractStatus").textContent = "اكتمل استخراج النص من PDF.";
+  } catch (error) {
+    console.error(error);
+    $("extractStatus").textContent =
+      "تعذرت قراءة PDF. قد يكون الملف محمياً أو ممسوحاً ضوئياً.";
+  }
+}
+
+/* التعرف الضوئي OCR */
+async function runOCR(input) {
+  const file = input.files[0];
+  input.value = "";
+
+  if (!file) return;
+
+  showExtractPanel();
+  $("extractStatus").textContent = "جارٍ تشغيل التعرف الضوئي على الحروف...";
+
+  let worker = null;
+
+  try {
+    if (!window.Tesseract) throw new Error("مكتبة OCR غير متاحة");
+
+    worker = await Tesseract.createWorker("ara+eng", 1, {
+      logger: message => {
+        if (message.status) {
+          $("extractStatus").textContent =
+            message.status + " " +
+            Math.round((message.progress || 0) * 100) + "%";
+        }
+      }
+    });
+
+    const result = await worker.recognize(file);
+
+    $("extractedText").value = result.data.text || "";
+    $("extractStatus").textContent = "اكتمل التعرف على النص.";
+  } catch (error) {
+    console.error(error);
+    $("extractStatus").textContent =
+      "تعذر تشغيل OCR. تحقق من الإنترنت وحاول بصورة أوضح.";
+  } finally {
+    if (worker) {
+      try {
+        await worker.terminate();
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+  }
+}
+
+function moveExtractedToEditor() {
+  const text = $("extractedText").value;
+
+  if (!text.trim()) {
+    alert("لا يوجد نص لنقله.");
+    return;
+  }
+
+  if (!confirm("هل تريد استبدال محتوى المحرر بالنص المستخرج؟")) return;
+
+  page.innerHTML = text.split(/\r?\n/)
+    .map(line => "<p>" + (esc(line) || "<br>") + "</p>")
+    .join("");
+
+  $("extractPanel").hidden = true;
+  resetSelection();
+  updateStats();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function downloadExtracted() {
+  const text = $("extractedText").value;
+
+  download(
+    new Blob([text], {type:"text/plain;charset=utf-8"}),
+    "النص_المستخرج.txt"
+  );
+}
+
+/* لصق النص دون إدخال HTML خارجي */
+page.addEventListener("paste", event => {
+  event.preventDefault();
+
+  const text = (event.clipboardData || window.clipboardData)
+    .getData("text/plain");
+
+  if (text) {
+    insertHTML(
+      text.split(/\r?\n/).map(line => esc(line)).join("<br>")
+    );
+  }
+});
+
+/* استعادة الحالة الأولية */
+window.addEventListener("DOMContentLoaded", () => {
+  applyPageConfig();
+  updateStats(false);
+  status("المحرر جاهز للكتابة");
+});
+
+/* حفظ التعديلات عند مغادرة الصفحة */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && currentId) {
+    flushSave();
+  }
+});
+
+window.addEventListener("pagehide", () => {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+});
+
+</script>
+</body>
+</html>

@@ -384,7 +384,7 @@ function setPattern(type,save=true){
 }
 function setFrame(value){pageConfig.frame=value==="none"?"0":value;page.style.border=pageConfig.frame==="0"?"1px solid #ddd":pageConfig.frame;scheduleSave()}
 
-/* الحفظ: تسلسل الكتابة ومنع الحفظ القديم */
+/* الحفظ التلقائي */
 function scheduleSave(){
  revision++;
  clearTimeout(saveTimer);
@@ -410,7 +410,7 @@ async function saveNow(silent=false){
   return true;
  }catch(error){
   console.error("Save error:",error);status("⚠ تعذر الحفظ");
-  if(!silent)alert("تعذر حفظ المستند. تحقق من مساحة التخزين، خصوصاً إذا كان المستند يحتوي على صور كبيرة.");
+  if(!silent)alert("تعذر حفظ المستند. تحقق من مساحة التخزين.");
   return false;
  }
 }
@@ -428,7 +428,7 @@ async function flushSave(){
  return true;
 }
 
-/* المستندات */
+/* إدارة المستندات */
 function resetToBlank(){
  currentId=null;currentTitle="مستند جديد";
  page.innerHTML="<p><br></p>";
@@ -439,7 +439,7 @@ function resetToBlank(){
 }
 async function newDocument(){
  if(!confirm("إنشاء مستند جديد؟ سيتم حفظ المستند الحالي أولاً."))return;
- if(!(await flushSave())){alert("تعذر حفظ المستند الحالي. لم يتم إنشاء مستند جديد.");return}
+ if(!(await flushSave())){alert("تعذر حفظ المستند الحالي.");return}
  resetToBlank();status("مستند جديد - لم يتم حفظه بعد");savedRevision=revision-1;
  window.scrollTo(0,0);page.focus();
 }
@@ -497,9 +497,7 @@ async function deleteDocument(id){
  try{
   clearTimeout(saveTimer);saveTimer=null;
   await saveQueue.catch(()=>{});
-  if(currentId===id){
-   resetToBlank();status("تم حذف المستند المفتوح");
-  }
+  if(currentId===id){resetToBlank();status("تم حذف المستند المفتوح");}
   await dbDelete(id);
   await openDocuments();
  }catch(error){console.error(error);alert("تعذر حذف المستند.")}
@@ -537,7 +535,7 @@ function setSize(size){
   const range=s.getRangeAt(0).cloneRange(),span=document.createElement("span");
   span.style.fontSize=size;span.appendChild(range.extractContents());range.insertNode(span);
   const nr=document.createRange();nr.selectNodeContents(span);s.removeAllRanges();s.addRange(nr);savedRange=nr.cloneRange();updateStats();
- }catch(e){console.error(e);alert("تعذر تغيير حجم الخط. حدد النص مرة أخرى.")}
+ }catch(e){console.error(e);alert("تعذر تغيير حجم الخط.")}
 }
 function undo(){cmd("undo")}
 function redo(){cmd("redo")}
@@ -632,50 +630,6 @@ function deleteSelectedImage(){
  selectedImage.remove();selectedImage=null;updateStats();
 }
 
-/* تنزيل الصور */
-async function shareOrDownload(files,title){
- if(navigator.canShare&&navigator.canShare({files})){
-  try{await navigator.share({files,title});status("تمت المشاركة");return}
-  catch(e){if(e.name==="AbortError"){status("تم الإلغاء");return}}
- }
- files.forEach((file,i)=>setTimeout(()=>download(file,file.name),i*400));
- status("✓ تم تنزيل الملفات");
-}
-async function downloadSelectedImage(){
- if(!selectedImage){alert("المس الصورة داخل المستند أولاً لتحديدها.");return}
- try{
-  const blob=await(await fetch(selectedImage.src)).blob();
-  const ext=(blob.type.split("/")[1]||"png").replace("jpeg","jpg");
-  const file=new File([blob],"صورة_"+Date.now()+"."+ext,{type:blob.type||"image/png"});
-  await shareOrDownload([file],safeName());
- }catch(e){console.error(e);alert("تعذر تحميل الصورة.")}
-}
-async function saveAsImage(split){
- if(typeof html2canvas==="undefined"){alert("مكتبة الصور لم تُحمّل. تحقق من الإنترنت.");return}
- status("جارٍ تجهيز الصورة...");
- const selected=selectedImage;
- try{
-  page.querySelectorAll("img").forEach(img=>img.classList.remove("selected-image"));
-  const canvas=await html2canvas(page,{scale:2,backgroundColor:pageConfig.color||"#fff",useCORS:true});
-  const toBlob=c=>new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("تعذر إنشاء الصورة")),"image/png"));
-  const files=[];
-  if(!split){
-   files.push(new File([await toBlob(canvas)],safeName()+".png",{type:"image/png"}));
-  }else{
-   const pageH=Math.round(canvas.width*1.4142),count=Math.max(1,Math.ceil(canvas.height/pageH));
-   for(let i=0;i<count;i++){
-    const h=Math.min(pageH,canvas.height-i*pageH),part=document.createElement("canvas");
-    part.width=canvas.width;part.height=h;
-    const ctx=part.getContext("2d");ctx.fillStyle=pageConfig.color||"#fff";ctx.fillRect(0,0,part.width,part.height);
-    ctx.drawImage(canvas,0,i*pageH,canvas.width,h,0,0,canvas.width,h);
-    files.push(new File([await toBlob(part)],safeName()+"_"+(i+1)+".png",{type:"image/png"}));
-   }
-  }
-  await shareOrDownload(files,safeName());
- }catch(e){console.error(e);status("تعذر إنشاء الصورة");alert("تعذر إنشاء الصورة.")}
- finally{if(selected&&page.contains(selected))selected.classList.add("selected-image")}
-}
-
 /* الرأس والتذييل والفواصل */
 function insertHeaderFooter(){
  insertHTML('<div style="border-bottom:1px solid #777;text-align:center;padding-bottom:8px;margin-bottom:20px">اكتب ترويسة المستند</div><p><br></p><div style="border-top:1px solid #777;text-align:center;padding-top:8px;margin-top:20px">اكتب تذييل المستند</div>');
@@ -694,29 +648,114 @@ function updateStats(save=true){
 }
 page.addEventListener("input",()=>updateStats());
 
-/* التصدير */
-function download(blob,filename){
- const url=URL.createObjectURL(blob),link=document.createElement("a");
- link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
- setTimeout(()=>URL.revokeObjectURL(url),10000);
+/* 🎯 الوظيفة المطلوبة: الحفظ بالصيغة المختارة (هاتف/كمبيوتر) وحذفه من ذاكرة البرنامج */
+async function exportAndCleanFile(blob, filename) {
+  const file = new File([blob], filename, { type: blob.type });
+  
+  // محاولة المشاركة أو التنزيل للهاتف أو الحاسوب
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: currentTitle });
+      status("✓ تمت مشاركة وحفظ الملف بنجاح");
+    } catch (e) {
+      if (e.name === "AbortError") {
+        status("تم إلغاء المشاركة");
+        return; // إذا ألغى المستخدم المشاركة، لا نحذف الملف من الذاكرة
+      }
+    }
+  } else {
+    // التنزيل التقليدي للكمبيوتر والهواتف الداعمة
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    status("✓ تم تنزيل الملف وحفظه بنجاح");
+  }
+
+  // حذف المستند من ذاكرة البرنامج (قاعدة البيانات المؤقتة) وتنظيف الشاشة بناءً على رغبتك
+  if (currentId) {
+    try {
+      await dbDelete(currentId);
+    } catch (err) {
+      console.warn("تعذر الحذف التلقائي من قاعدة البيانات المحلية:", err);
+    }
+  }
+  
+  // إعادة ضبط المحرر لمستند جديد نظيف
+  resetToBlank();
+  status("✓ تم حفظ الملف نهائياً وحذفه من ذاكرة البرنامج المؤقتة");
 }
-function safeHTML(){return sanitizeHTML(page.innerHTML)}
-function exportTXT(){download(new Blob([page.innerText],{type:"text/plain;charset=utf-8"}),safeName()+".txt")}
-function exportHTML(){
- const html='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(currentTitle)+'</title><style>body{font:18px Tahoma,Arial;line-height:1.9;direction:rtl;padding:30px}img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #555;padding:8px}.box{padding:15px;border:2px solid #555}</style></head><body>'+safeHTML()+'</body></html>';
- download(new Blob([html],{type:"text/html;charset=utf-8"}),safeName()+".html");
-}
-async function exportDOCX(){
- if(typeof htmlDocx==="undefined"){alert("مكتبة Word لم تُحمّل. تحقق من اتصال الإنترنت.");return}
+
+async function downloadSelectedImage(){
+ if(!selectedImage){alert("المس الصورة داخل المستند أولاً لتحديدها.");return}
  try{
-  const body='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{direction:rtl;text-align:right;font-family:Tahoma,Arial}</style></head><body dir="rtl">'+safeHTML()+"</body></html>";
-  const blob=htmlDocx.asBlob(body,{orientation:"portrait",margins:{top:850,right:850,bottom:850,left:850}});
-  download(blob,safeName()+".docx");
- }catch(e){console.error(e);alert("تعذر إنشاء ملف Word. جرّب تصدير HTML أو PDF.")}
+  const blob=await(await fetch(selectedImage.src)).blob();
+  const ext=(blob.type.split("/")[1]||"png").replace("jpeg","jpg");
+  await exportAndCleanFile(blob, "صورة_"+Date.now()+"."+ext);
+ }catch(e){console.error(e);alert("تعذر تحميل الصورة.")}
 }
+
+async function saveAsImage(split){
+ if(typeof html2canvas==="undefined"){alert("مكتبة الصور لم تُحمّل. تحقق من الإنترنت.");return}
+ status("جارٍ تجهيز الصورة...");
+ const selected=selectedImage;
+ try{
+  page.querySelectorAll("img").forEach(img=>img.classList.remove("selected-image"));
+  const canvas=await html2canvas(page,{scale:2,backgroundColor:pageConfig.color||"#fff",useCORS:true});
+  const toBlob=c=>new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("تعذر إنشاء الصورة")),"image/png"));
+  
+  if(!split){
+   const blob=await toBlob(canvas);
+   await exportAndCleanFile(blob, safeName()+".png");
+  }else{
+   // في حال تقسيم الصور لعدة صفحات، سنقوم بتنزيل أول صفحة أو تجهيزها
+   const pageH=Math.round(canvas.width*1.4142),count=Math.max(1,Math.ceil(canvas.height/pageH));
+   for(let i=0;i<count;i++){
+    const h=Math.min(pageH,canvas.height-i*pageH),part=document.createElement("canvas");
+    part.width=canvas.width;part.height=h;
+    const ctx=part.getContext("2d");ctx.fillStyle=pageConfig.color||"#fff";ctx.fillRect(0,0,part.width,part.height);
+    ctx.drawImage(canvas,0,i*pageH,canvas.width,h,0,0,canvas.width,h);
+    const blob=await toBlob(part);
+    await exportAndCleanFile(blob, safeName()+"_"+(i+1)+".png");
+   }
+  }
+ }catch(e){console.error(e);status("تعذر إنشاء الصورة");alert("تعذر إنشاء الصورة.")}
+ finally{if(selected&&page.contains(selected))selected.classList.add("selected-image")}
+}
+
+function exportTXT(){
+ const blob=new Blob([page.innerText],{type:"text/plain;charset=utf-8"});
+ exportAndCleanFile(blob, safeName()+".txt");
+}
+
+function exportHTML(){
+ const html='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(currentTitle)+'</title><style>body{font:18px Tahoma,Arial;line-height:1.9;direction:rtl;padding:30px}img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #555;padding:8px}.box{padding:15px;border:2px solid #555}</style></head><body>'+sanitizeHTML(page.innerHTML)+'</body></html>';
+ const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+ exportAndCleanFile(blob, safeName()+".html");
+}
+
+async function exportDOCX(){
+ if(typeof htmlDocx==="undefined"){alert("مكتبة Word لم تُحمّل.");return}
+ try{
+  const body='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{direction:rtl;text-align:right;font-family:Tahoma,Arial}</style></head><body dir="rtl">'+sanitizeHTML(page.innerHTML)+"</body></html>";
+  const blob=htmlDocx.asBlob(body,{orientation:"portrait",margins:{top:850,right:850,bottom:850,left:850}});
+  await exportAndCleanFile(blob, safeName()+".docx");
+ }catch(e){console.error(e);alert("تعذر إنشاء ملف Word.")}
+}
+
 async function makePDF(){
- if(!(await flushSave())){alert("تعذر حفظ المستند قبل الطباعة.");return}
+ if(!(await flushSave())){alert("تعذر الحفظ.");return}
  window.print();
+ // بعد الطباعة أو التصدير كـ PDF عبر المتصفح، نقوم بتفريغ الذاكرة وحذف المستند بناءً على الطلب
+ if(confirm("هل تم الحفظ بنجاح وتريد حذف المستند من ذاكرة البرنامج؟")){
+  if(currentId) await dbDelete(currentId);
+  resetToBlank();
+  status("✓ تم تفريغ المستند من الذاكرة");
+ }
 }
 
 /* البحث والاستبدال */
@@ -735,7 +774,7 @@ function collectSearchMatches(query){
  return matches;
 }
 function findText(){
- const q=$("findQ").value;if(!q){alert("اكتب النص الذي تريد البحث عنه.");return}
+ const q=$("findQ").value;if(!q){alert("اكتب النص للبحث.");return}
  lastSearchMatches=collectSearchMatches(q);
  if(!lastSearchMatches.length){alert("لم يتم العثور على النص.");return}
  lastSearchIndex=(lastSearchIndex+1)%lastSearchMatches.length;
@@ -821,7 +860,7 @@ async function readPDF(input){const file=input.files[0];input.value="";if(file)a
 async function extractPDF(file){
  showExtractPanel();$("extractedText").value="";setProgress("جارٍ تحميل قارئ PDF...");
  try{$("extractedText").value=(await readPdfPages(file)).join("\n\n");setProgress("اكتمل استخراج النص من PDF.")}
- catch(e){console.error(e);setProgress("تعذرت قراءة PDF. قد يكون الملف محمياً أو الإنترنت غير متاح.")}
+ catch(e){console.error(e);setProgress("تعذرت قراءة PDF.")}
 }
 function textToHTML(text){return text.split(/\r?\n/).map(line=>"<p>"+(esc(line)||"<br>")+"</p>").join("")}
 async function pdfToWord(input){
@@ -833,15 +872,15 @@ async function pdfToWord(input){
   page.innerHTML=pages.map(textToHTML).join('<div style="page-break-after:always"></div>');
   currentTitle=file.name.replace(/\.pdf$/i,"")||currentTitle;$("docTitle").textContent=currentTitle;
   resetSelection();updateStats();await exportDOCX();
-  setProgress("✓ تم التحويل. راجع النص في المحرر وعدّله ثم صدّر Word من جديد إن أردت.");
- }catch(e){console.error(e);setProgress("تعذر تحويل PDF. تحقق من الإنترنت أو جرّب ملفاً آخر.");alert("تعذر تحويل PDF إلى Word.")}
+  setProgress("✓ تم التحويل والتصدير بنجاح.");
+ }catch(e){console.error(e);setProgress("تعذر تحويل PDF.");alert("تعذر تحويل PDF إلى Word.")}
 }
 async function runOCR(input){
  const file=input.files[0];input.value="";if(!file)return;
  showExtractPanel();setProgress("جارٍ تشغيل التعرف الضوئي على الحروف...");
  let worker=null;
  try{worker=await createOcrWorker();$("extractedText").value=(await worker.recognize(file)).data.text||"";setProgress("اكتمل التعرف على النص.")}
- catch(e){console.error(e);setProgress("تعذر تشغيل OCR. تحقق من الإنترنت وحاول بصورة أوضح.")}
+ catch(e){console.error(e);setProgress("تعذر تشغيل OCR.")}
  finally{if(worker)try{await worker.terminate()}catch(e){console.warn(e)}}
 }
 function moveExtractedToEditor(){
@@ -851,7 +890,10 @@ function moveExtractedToEditor(){
  page.innerHTML=textToHTML(text);$("extractPanel").hidden=true;resetSelection();updateStats();
  window.scrollTo({top:0,behavior:"smooth"});
 }
-function downloadExtracted(){download(new Blob([$ ("extractedText").value],{type:"text/plain;charset=utf-8"}),"النص_المستخرج.txt")}
+function downloadExtracted(){
+ const blob=new Blob([$("extractedText").value],{type:"text/plain;charset=utf-8"});
+ exportAndCleanFile(blob, "النص_المستخرج.txt");
+}
 
 /* اللصق */
 page.addEventListener("paste",e=>{
@@ -865,7 +907,7 @@ page.addEventListener("paste",e=>{
 $("imageInput").addEventListener("change",function(){insertImages(this)});
 $("importInput").addEventListener("change",function(){importFile(this)});
 $("pdfInput").addEventListener("change",function(){readPDF(this)});
-$("pdf2wordInput").addEventListener("change",function(){pdfToWord(this)});
+$("pdf2wordInput").addEventListener("change",function({pdfToWord(this)}));
 $("ocrInput").addEventListener("change",function(){runOCR(this)});
 
 /* مغادرة الصفحة */

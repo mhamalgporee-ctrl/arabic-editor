@@ -76,7 +76,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;touch-action:man
 <div id="modalHost"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -268,7 +267,8 @@ function cmd(c,v=null){restore();try{document.execCommand("styleWithCSS",false,t
 function ins(h){restore();try{document.execCommand("insertHTML",false,h);stats()}catch(e){alert("تعذر الإدراج.")}}
 function setSize(sz){
  restore();const s=getSelection();
- if(!s||s.isCollapsed||!s.rangeCount||!page.contains(s.anchorNode)){alert("حدد النص أولاً.");return}
+ if(s&&s.rangeCount&&s.isCollapsed&&page.contains(s.anchorNode)){let bk=s.anchorNode;if(bk.nodeType===3)bk=bk.parentElement;bk=bk.closest("p,h1,h2,h3,li,blockquote,td,th");if(bk&&page.contains(bk)){const rg=document.createRange();rg.selectNodeContents(bk);s.removeAllRanges();s.addRange(rg)}}
+ if(!s||s.isCollapsed||!s.rangeCount||!page.contains(s.anchorNode)){alert("اكتب نصاً ثم حدده لتغيير حجمه.");return}
  const r=s.getRangeAt(0),sp=document.createElement("span");sp.style.fontSize=sz;sp.appendChild(r.extractContents());r.insertNode(sp);
  const n=document.createRange();n.selectNodeContents(sp);s.removeAllRanges();s.addRange(n);range0=n.cloneRange();stats();
 }
@@ -369,12 +369,137 @@ function exportHTML(){
  const w=cleanBox(),h=w.innerHTML;w.remove();
  download(new Blob(['<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>body{font:18px Cairo,Tahoma,Arial;line-height:2;direction:rtl;padding:32px;color:#111;background:#fff;max-width:820px;margin:auto}</style></head><body class="xc">'+h+"</body></html>"],{type:"text/html;charset=utf-8"}),safeName()+".html");
 }
-function exportDOCX(){
- if(typeof htmlDocx==="undefined"){alert("مكتبة Word غير متاحة. تحقق من الاتصال بالإنترنت.");return false}
+function loadScript(u){return new Promise((r,j)=>{const e=document.createElement("script");e.src=u;e.onload=r;e.onerror=j;document.head.appendChild(e)})}
+async function needDocx(){
+ if(window.docx)return true;
+ for(const u of ["https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js","https://unpkg.com/docx@7.8.2/build/index.js","https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"]){
+  try{await loadScript(u);if(window.docx)return true}catch(e){}
+ }
+ return false;
+}
+const RTLRE=/[\u0590-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/,DPG={A4:[11906,16838],A5:[8391,11906],Letter:[12240,15840]};
+let DW=9000,numN=0;
+function hexOf(c){
+ if(!c)return;c=c.trim();
+ if(c[0]==="#"){c=c.slice(1);if(c.length===3)c=c.replace(/./g,"$&$&");return c.length===6?c.toUpperCase():undefined}
+ const m=c.match(/[\d.]+/g);if(!m||m.length<3)return;if(m.length>3&&+m[3]===0)return;
+ return m.slice(0,3).map(x=>(Math.round(+x)).toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+function styleOf(el,st){
+ const n={...st},t=el.tagName.toLowerCase(),s=el.style||{};
+ if(t==="b"||t==="strong"||/^h[1-6]$/.test(t))n.b=true;
+ if(t==="i"||t==="em")n.i=true;
+ if(t==="u"||t==="a")n.u=true;
+ if(t==="s"||t==="strike"||t==="del")n.s=true;
+ if(t==="a")n.c="0563C1";
+ if(/^(bold|[6-9]00)$/.test(s.fontWeight))n.b=true;
+ if(s.fontStyle==="italic")n.i=true;
+ const td=s.textDecorationLine||s.textDecoration||"";
+ if(/underline/.test(td))n.u=true;if(/line-through/.test(td))n.s=true;
+ const c=hexOf(s.color);
+ if(c&&!(parseInt(c.slice(0,2),16)>235&&parseInt(c.slice(2,4),16)>235&&parseInt(c.slice(4,6),16)>235))n.c=c;
+ const bg=hexOf(s.backgroundColor);if(bg)n.bg=bg;
+ if(s.fontSize){const m=s.fontSize.match(/([\d.]+)px/);if(m)n.z=Math.round(m[1]*1.5)}
+ if(s.fontFamily)n.f=s.fontFamily.split(",")[0].replace(/["']/g,"").trim();
+ return n;
+}
+function fmt(st,t){
+ const z=st.z||28;
+ return{text:t,bold:!!st.b,boldComplexScript:!!st.b,italics:!!st.i,italicsComplexScript:!!st.i,underline:st.u?{}:undefined,strike:!!st.s,color:st.c,size:z,sizeComplexScript:z,font:st.f||"Tahoma",rightToLeft:cfg.direction==="rtl"&&RTLRE.test(t),shading:st.bg?{type:docx.ShadingType.CLEAR,color:"auto",fill:st.bg}:undefined};
+}
+function imgRun(im){
+ return new Promise(res=>{
+  const i=new Image();
+  i.onload=()=>{try{
+   let w=i.naturalWidth||300,h=i.naturalHeight||200;
+   const sw=parseFloat(im.style.width)||0;if(sw){h=h*sw/w;w=sw}
+   const max=(SIZES[cfg.size]||SIZES.A4).w-2*Math.round(cfg.margin*3.78);
+   if(w>max){h=h*max/w;w=max}
+   const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext("2d").drawImage(i,0,0);
+   const b=atob(c.toDataURL("image/png").split(",")[1]),u=new Uint8Array(b.length);for(let k=0;k<b.length;k++)u[k]=b.charCodeAt(k);
+   res(new docx.ImageRun({data:u,type:"png",transformation:{width:Math.round(w),height:Math.round(h)}}));
+  }catch(e){console.warn(e);res(null)}};
+  i.onerror=()=>res(null);i.src=im.src;
+ });
+}
+async function runs(node,st,out){
+ for(const n of node.childNodes){
+  if(n.nodeType===3){const t=n.textContent.replace(/[\r\n\t ]+/g," ");if(t)out.push(new docx.TextRun(fmt(st,t)))}
+  else if(n.nodeType===1){
+   const t=n.tagName.toLowerCase();
+   if(t==="br")out.push(new docx.TextRun({break:1}));
+   else if(t==="img"){const r=await imgRun(n);if(r)out.push(r)}
+   else if(!/^(ul|ol|table|style|script)$/.test(t))await runs(n,styleOf(n,st),out);
+  }
+ }
+}
+function para(r,el,o){
+ const ta=(el&&el.style&&el.style.textAlign)||"",A=docx.AlignmentType,rtl=cfg.direction==="rtl";
+ let al;
+ if(ta==="center")al=A.CENTER;else if(ta==="justify")al=A.BOTH;
+ else if(rtl&&ta==="left")al=A.RIGHT;else if(!rtl&&ta==="right")al=A.RIGHT;
+ return new docx.Paragraph({children:r,bidirectional:rtl,alignment:al,spacing:{after:120,line:360},...(o||{})});
+}
+async function li2(li,t,inst,out,base,lvl){
+ const r=[];await runs(li,styleOf(li,base),r);
+ out.push(para(r,li,t==="ul"?{bullet:{level:lvl}}:{numbering:{reference:"n",level:lvl,instance:inst}}));
+ for(const c of li.children){
+  const ct=c.tagName.toLowerCase();
+  if(ct==="ul"||ct==="ol"){const i2=++numN;for(const l2 of c.children)if(l2.tagName.toLowerCase()==="li")await li2(l2,ct,i2,out,base,Math.min(lvl+1,2))}
+ }
+}
+async function tbl(t,base){
+ const rowsEl=[...t.querySelectorAll("tr")],cols=Math.max(1,...rowsEl.map(r=>r.children.length)),cw=Math.floor(DW/cols),rows=[];
+ for(const tr of rowsEl){
+  const cells=[];
+  for(const td of tr.children){
+   const ch=[];await blocks(td,ch,styleOf(td,td.tagName==="TH"?{...base,b:true}:base));
+   if(!ch.length)ch.push(new docx.Paragraph({bidirectional:cfg.direction==="rtl",children:[]}));
+   cells.push(new docx.TableCell({children:ch,width:{size:cw,type:docx.WidthType.DXA}}));
+  }
+  if(cells.length)rows.push(new docx.TableRow({children:cells}));
+ }
+ return new docx.Table({rows,columnWidths:Array(cols).fill(cw),width:{size:cw*cols,type:docx.WidthType.DXA},visuallyRightToLeft:cfg.direction==="rtl"});
+}
+async function blocks(root,out,base){
+ for(const n of root.childNodes){
+  if(n.nodeType===3){if(n.textContent.trim()){const r=[];await runs({childNodes:[n]},base,r);out.push(para(r,null))}continue}
+  if(n.nodeType!==1)continue;
+  const t=n.tagName.toLowerCase();
+  if(t==="style"||t==="script")continue;
+  if(t==="hr"){out.push(new docx.Paragraph({border:{bottom:{style:docx.BorderStyle.SINGLE,size:6,color:"999999",space:1}}}));continue}
+  if(n.classList.contains("pb")){out.push(new docx.Paragraph({children:[new docx.PageBreak()]}));continue}
+  if(t==="table"){out.push(await tbl(n,base));continue}
+  if(t==="ul"||t==="ol"){const inst=++numN;for(const li of n.children)if(li.tagName.toLowerCase()==="li")await li2(li,t,inst,out,base,0);continue}
+  if(/^(p|div|h[1-6]|blockquote|pre)$/.test(t)){
+   const b0={...base},hz={h1:48,h2:39,h3:33}[t];
+   if(hz){b0.z=hz;b0.b=true}
+   if(t==="blockquote")b0.c="555555";
+   const st=styleOf(n,b0);
+   if([...n.children].some(c=>/^(p|div|h[1-6]|ul|ol|table|blockquote|hr)$/.test(c.tagName.toLowerCase())))await blocks(n,out,st);
+   else{const r=[];await runs(n,st,r);if(!r.length)r.push(new docx.TextRun({text:""}));out.push(para(r,n))}
+   continue;
+  }
+  const r=[];await runs({childNodes:[n]},base,r);out.push(para(r,null));
+ }
+}
+async function buildDocx(){
+ const pg=DPG[cfg.size]||DPG.A4,m=Math.round(cfg.margin*56.7);DW=pg[0]-2*m;numN=0;
+ const root=document.createElement("div");root.innerHTML=sanitize(page.innerHTML);
+ const out=[];await blocks(root,out,{z:28});
+ if(!out.length)out.push(new docx.Paragraph({children:[]}));
+ const lv=[0,1,2].map(i=>({level:i,format:"decimal",text:"%"+(i+1)+".",alignment:docx.AlignmentType.LEFT}));
+ const doc=new docx.Document({title:title,creator:"المحرر العربي الاحترافي",numbering:{config:[{reference:"n",levels:lv}]},styles:{default:{document:{run:{font:"Tahoma",size:28,sizeComplexScript:28}}}},sections:[{properties:{page:{size:{width:pg[0],height:pg[1]},margin:{top:m,right:m,bottom:m,left:m}}},children:out}]});
+ return docx.Packer.toBlob(doc);
+}
+async function exportDOCX(){
+ status("جارٍ إنشاء Word...");
+ try{if(await needDocx()){download(await buildDocx(),safeName()+".docx");return true}}catch(e){console.error(e)}
  try{
   const w=cleanBox(),h=w.innerHTML;w.remove();
-  const html='<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><style>body{direction:rtl;text-align:'+(cfg.direction==="ltr"?"left":"right")+';font-family:Tahoma,Arial;font-size:14pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #666;padding:6px}</style></head><body dir="'+cfg.direction+'">'+h+"</body></html>";
-  download(htmlDocx.asBlob(html,{orientation:"portrait",margins:{top:1134,right:1134,bottom:1134,left:1134}}),safeName()+".docx");return true;
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" dir="rtl" lang="ar"><head><meta charset="utf-8"><style>body{direction:rtl;text-align:right;font-family:Tahoma,Arial;font-size:14pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #666;padding:6px}</style></head><body dir="rtl">'+h+"</body></html>";
+  download(new Blob(["\ufeff"+html],{type:"application/msword"}),safeName()+".doc");
+  alert("تعذر إنشاء docx (تحقق من الإنترنت)، فتم تنزيل نسخة .doc بدلاً منها.");return true;
  }catch(e){console.error(e);alert("تعذر تصدير Word.");return false}
 }
 
@@ -475,7 +600,7 @@ async function pdfToWord(inp){
   page.innerHTML=pages.map(textHTML).join('<div class="pb"></div>');
   title=f.name.replace(/\.pdf$/i,"")||title;$("docTitle").textContent=title;
   resetSel();stats();
-  if(exportDOCX())prog("✓ تم التحويل وتنزيل ملف Word.");
+  if(await exportDOCX())prog("✓ تم التحويل وتنزيل ملف Word.");
  }catch(e){console.error(e);prog("فشل التحويل.");alert("تعذر تحويل PDF إلى Word.")}
 }
 async function runOCR(inp){

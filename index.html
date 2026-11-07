@@ -65,12 +65,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;touch-action:man
 <input id="pdfInput" type="file" accept="application/pdf" hidden>
 <input id="p2wInput" type="file" accept="application/pdf" hidden>
 <input id="ocrInput" type="file" accept="image/*" hidden>
+<input id="pdfImgInput" type="file" accept="application/pdf" hidden>
 
 <main class="ew"><div id="page" contenteditable="true" spellcheck="true" dir="rtl"><p><br></p></div></main>
 <div class="sb"><span id="docTitle">مستند جديد</span><span>كلمات <b id="words">0</b></span><span>حروف <b id="chars">0</b></span><span hidden><b id="paras"></b><b id="imgs"></b></span><span id="status">جاهز</span></div>
 <section class="panel" id="xp" hidden>
 <h3>النص المستخرج / OCR</h3><p id="xs"></p><textarea id="xt" dir="auto"></textarea>
-<div class="row"><button onclick="moveX()">نقل للمحرر</button><button onclick="dlX()">تنزيل TXT</button><button onclick="$('xp').hidden=true">إغلاق</button></div>
+<div class="row"><button onclick="stopFlag=true">⏹ إيقاف</button><button onclick="moveX()">نقل للمحرر</button><button onclick="dlX()">تنزيل TXT</button><button onclick="$('xp').hidden=true">إغلاق</button></div>
 </section>
 <footer class="footer"><b>المحرر العربي الاحترافي للمستندات</b><br>تصميم وإعداد وتطوير: محمد علي أحمد الحطاب · إهداء مجاني</footer>
 <div id="modalHost"></div>
@@ -91,7 +92,7 @@ const FS=[["14px","14 صغير"],["16px","16 عادي"],["18px","18"],["20px","2
 const MENU=[
 {t:"📁 ملف",i:[["＋ مستند جديد",()=>newDoc()],["📚 مستنداتي",()=>openDocs()],["💾 حفظ الآن",()=>saveNow(false)],["✏️ تسمية المستند",()=>renameDoc()],["📥 جلب ملف (Word/PDF/TXT/HTML)",()=>$("importInput").click()],["🖨 طباعة",()=>window.print()],["🗑 مسح المحتوى",()=>clearDoc(),"dg"]]},
 {t:"📤 تصدير",i:[["📝 Word ‏(.docx)",()=>exportDOCX()],["📄 PDF",()=>exportPDF()],["🖼 صورة PNG",()=>exportImage(false)],["🖼 صور بالصفحات",()=>exportImage(true)],["🌐 HTML",()=>exportHTML()],["📃 TXT",()=>exportTXT()]]},
-{t:"📑 PDF وOCR",i:[["🔄 تحويل PDF إلى Word",()=>$("p2wInput").click()],["📖 قراءة نص PDF",()=>$("pdfInput").click()],["👁️ OCR لصورة",()=>$("ocrInput").click()],["📜 عرض النص المستخرج",()=>showX()]]},
+{t:"📑 PDF وOCR",i:[["🔄 تحويل PDF إلى Word",()=>$("p2wInput").click()],["🖼 استيراد PDF كصور (طبق الأصل)",()=>$("pdfImgInput").click()],["📖 قراءة نص PDF",()=>$("pdfInput").click()],["👁️ OCR لصورة",()=>$("ocrInput").click()],["📜 عرض النص المستخرج",()=>showX()]]},
 {t:"🎨 المظهر",i:[["☀️ نهار",()=>setTheme("light")],["📜 ورق",()=>setTheme("sepia")],["🌙 داكن",()=>setTheme("dark")]]},
 {t:"✏️ تنسيق النص",i:[["غامق",()=>cmd("bold")],["مائل",()=>cmd("italic")],["تسطير",()=>cmd("underline")],["يتوسطه خط",()=>cmd("strikeThrough")],["إزالة التنسيق",()=>cmd("removeFormat")],["↶ تراجع",()=>cmd("undo")],["↷ إعادة",()=>cmd("redo")]]},
 {t:"🔤 الخط واللون",i:[{s:1,ph:"نوع الخط",o:FONTS.map(x=>[x,x]),f:v=>cmd("fontName",v)},{s:1,ph:"حجم الخط",o:FS,f:v=>setSize(v)},{c:1,l:"لون النص",v:"#111111",f:v=>cmd("foreColor",v)},{c:1,l:"تمييز النص",v:"#fff176",f:v=>cmd("hiliteColor",v)}]},
@@ -551,9 +552,10 @@ async function importFile(inp){
 function textHTML(t){return t.split(/\r?\n/).map(l=>"<p>"+(esc(l)||"<br>")+"</p>").join("")}
 function showX(){$("xp").hidden=false;$("xp").scrollIntoView({behavior:"smooth"})}
 function prog(m){$("xs").textContent=m;status(m)}
+let stopFlag=false,curPg=0;
 async function ocrWorker(){
  if(!window.Tesseract)throw new Error("OCR");
- return Tesseract.createWorker("ara+eng",1,{logger:m=>{if(m.status)prog(m.status+" "+Math.round((m.progress||0)*100)+"%")}});
+ return Tesseract.createWorker("ara",1,{logger:m=>{if(m.status==="recognizing text")prog("الصفحة "+curPg+" — OCR "+Math.round((m.progress||0)*100)+"%");else if(m.status)prog("OCR: تجهيز ("+m.status+")")}});
 }
 function itemsText(items){
  const lines=[];let cur=[],y0=null;
@@ -566,37 +568,84 @@ function itemsText(items){
  if(cur.length)lines.push(cur.join(" "));
  return lines.join("\n");
 }
-async function readPdf(file){
+const AR_RE=/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g,OK_RE=/[^\s\u0000-\u024F\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u2000-\u206F]/g;
+function needOcr(t){
+ const a=(t.match(AR_RE)||[]).length,b=(t.match(OK_RE)||[]).length;
+ return a<15||b/(a+b)>0.08;
+}
+function fixRev(t){
+ const a=(t.match(/ال/g)||[]).length,b=(t.match(/لا/g)||[]).length;
+ if(b>3&&b>a*1.3)return t.split("\n").map(l=>[...l].reverse().join("")).join("\n");
+ return t;
+}
+async function openPdf(file){
  if(!window.pdfjsLib)throw new Error("pdfjs");
  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
- const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,pages=[];let wk=null;
+ return pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+}
+function askRange(n){
+ const v=prompt("الملف فيه "+n+" صفحة. اكتب نطاق الصفحات (مثال 1-20 أو 21-40)، أو اكتب الكل:",n<=20?"الكل":"1-20");
+ if(v===null)return null;
+ const t=v.trim().replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632);
+ if(!t||/^(الكل|all)$/i.test(t))return[1,n];
+ const m=t.match(/^(\d+)(?:\s*[-–]\s*(\d+))?$/);
+ if(!m){alert("نطاق غير صحيح.");return null}
+ const a=Math.max(1,+m[1]),b=Math.min(n,+(m[2]||m[1]));
+ if(a>b){alert("نطاق غير صحيح.");return null}
+ return[a,b];
+}
+async function readPdf(pdf,range,onPage){
+ const n=pdf.numPages,a=range?range[0]:1,b=range?range[1]:n,pages=[];let wk=null;stopFlag=false;
  try{
-  for(let i=1;i<=pdf.numPages;i++){
-   const p=await pdf.getPage(i);prog("الصفحة "+i+" من "+pdf.numPages);
+  for(let i=a;i<=b&&!stopFlag;i++){
+   curPg=i;const p=await pdf.getPage(i);prog("الصفحة "+i+" ("+(i-a+1)+" من "+(b-a+1)+")");
    let t=itemsText((await p.getTextContent()).items);
-   if(t.replace(/\s/g,"").length<15){
-    prog("الصفحة "+i+" صورة، تشغيل OCR...");
+   if(needOcr(t)){
+    prog("الصفحة "+i+": النص غير مقروء، تشغيل OCR...");
     if(!wk)wk=await ocrWorker();
-    const vp=p.getViewport({scale:2}),c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;
+    const vp=p.getViewport({scale:2.5}),c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;
     await p.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
-    t=(await wk.recognize(c)).data.text||"";
-   }
-   pages.push(t);
+    t=(await wk.recognize(c)).data.text||"";c.width=c.height=0;
+   }else t=fixRev(t);
+   pages.push(t);if(onPage)onPage(t,i);
+   if(p.cleanup)p.cleanup();
   }
  }finally{if(wk)try{await wk.terminate()}catch(e){}}
  return pages;
 }
 async function extractPDF(f){
  showX();$("xt").value="";prog("جارٍ قراءة PDF...");
- try{$("xt").value=(await readPdf(f)).join("\n\n");prog("اكتمل استخراج النص.")}
- catch(e){console.error(e);prog("تعذرت قراءة PDF.")}
+ try{
+  const pdf=await openPdf(f),r=askRange(pdf.numPages);
+  if(!r){prog("أُلغي الاستخراج.");return}
+  await readPdf(pdf,r,t=>{const x=$("xt");x.value+=(x.value?"\n\n":"")+t;x.scrollTop=x.scrollHeight});
+  prog(stopFlag?"تم الإيقاف. النص المستخرج حتى الآن في الخانة.":"اكتمل استخراج النص.");
+ }catch(e){console.error(e);prog("تعذرت قراءة PDF.")}
+}
+async function pdfAsImages(inp){
+ const f=inp.files[0];inp.value="";if(!f)return;
+ try{
+  const pdf=await openPdf(f),r=askRange(pdf.numPages);if(!r)return;
+  if(r[1]-r[0]>=30&&!confirm("عدد الصفحات كبير وقد يبطئ المحرر. الأفضل دفعات من 30 صفحة. متابعة؟"))return;
+  if(!confirm("ستُضاف الصفحات كصور طبق الأصل في آخر المستند. متابعة؟"))return;
+  for(let i=r[0];i<=r[1];i++){
+   status("تحويل الصفحة "+i+" ("+(i-r[0]+1)+" من "+(r[1]-r[0]+1)+")");
+   const p=await pdf.getPage(i),vp=p.getViewport({scale:1.6}),c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;
+   await p.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
+   const im=document.createElement("img");im.src=c.toDataURL("image/jpeg",.85);im.alt="صفحة "+i;
+   page.appendChild(im);c.width=c.height=0;if(p.cleanup)p.cleanup();
+  }
+  stats();status("✓ تمت إضافة الصفحات كصور");
+ }catch(e){console.error(e);alert("تعذر استيراد الصفحات.")}
 }
 async function pdfToWord(inp){
  const f=inp.files[0];inp.value="";if(!f)return;
  if(!confirm("تحويل PDF إلى Word؟ سيحل محتواه محل محتوى المحرر ثم يُنزَّل ملف Word."))return;
  try{
   prog("جارٍ التحويل...");
-  const pages=await readPdf(f);
+  const pdf=await openPdf(f),rg=askRange(pdf.numPages);
+  if(!rg){prog("أُلغي التحويل.");return}
+  const pages=await readPdf(pdf,rg);
   page.innerHTML=pages.map(textHTML).join('<div class="pb"></div>');
   title=f.name.replace(/\.pdf$/i,"")||title;$("docTitle").textContent=title;
   resetSel();stats();
@@ -622,6 +671,7 @@ $("importInput").onchange=function(){importFile(this)};
 $("pdfInput").onchange=function(){const f=this.files[0];this.value="";if(f)extractPDF(f)};
 $("p2wInput").onchange=function(){pdfToWord(this)};
 $("ocrInput").onchange=function(){runOCR(this)};
+$("pdfImgInput").onchange=function(){pdfAsImages(this)};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flush()});
 addEventListener("pagehide",()=>flush());
 

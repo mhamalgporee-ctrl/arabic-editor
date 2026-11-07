@@ -71,6 +71,7 @@ button{cursor:pointer;touch-action:manipulation}
 .doc-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
 .doc-item button{min-height:40px}
 .modal button{min-height:42px;padding:8px 12px;border-radius:9px}
+.help-list{line-height:2;padding-right:20px;margin:0}
 
 @media(max-width:600px){
   #page{min-height:80vh;padding:16px 14px;font-size:18px}
@@ -111,6 +112,7 @@ button{cursor:pointer;touch-action:manipulation}
     <button onclick="showTab(4)">➕ إدراج</button>
     <button onclick="showTab(5)">📄 صفحة</button>
     <button onclick="showTab(6)">🖼 صورة</button>
+    <button onclick="showHelp()">❓ دليل</button>
   </div>
 
   <div class="tool-section" data-tab>
@@ -118,8 +120,11 @@ button{cursor:pointer;touch-action:manipulation}
     <button onclick="openDocuments()">📚 مستنداتي</button>
     <button onclick="saveNow()">💾 حفظ</button>
     <button onclick="renameDocument()">✏️ تسمية</button>
+    <button class="primary" onclick="saveAsImage(false)">🖼 حفظ كصورة</button>
+    <button class="primary" onclick="saveAsImage(true)">🖼 صور بالصفحات</button>
     <button class="primary" onclick="exportDOCX()">📝 تصدير Word</button>
     <button class="primary" onclick="makePDF()">📄 تصدير PDF</button>
+    <button onclick="window.print()">🖨 طباعة</button>
     <button onclick="exportHTML()">🌐 HTML</button>
     <button onclick="exportTXT()">📃 TXT</button>
     <button class="danger" onclick="clearDocument()">🗑 مسح المحتوى</button>
@@ -196,7 +201,7 @@ button{cursor:pointer;touch-action:manipulation}
     <button onclick="addTableRow()">＋ صف</button>
     <button onclick="addTableColumn()">＋ عمود</button>
     <button onclick="insertPageBreak()">فاصل صفحة</button>
-    <button onclick="insertImagePicker()">📷 صورة</button>
+    <button onclick="insertImagePicker()">📷 رفع صورة</button>
     <input id="imageInput" type="file" accept="image/*" multiple hidden onchange="insertImages(this)">
   </div>
 
@@ -233,12 +238,15 @@ button{cursor:pointer;touch-action:manipulation}
   </div>
 
   <div class="tool-section" data-tab>
+    <button class="primary" onclick="insertImagePicker()">📷 رفع صورة</button>
+    <button class="primary" onclick="downloadSelectedImage()">⬇ تحميل الصورة المحددة</button>
+    <button class="primary" onclick="saveAsImage(false)">🖼 حفظ المستند كصورة</button>
     <button onclick="resizeSelectedImage(0.9)">تصغير الصورة</button>
     <button onclick="resizeSelectedImage(1.1)">تكبير الصورة</button>
     <button onclick="alignSelectedImage('right')">الصورة يمين</button>
     <button onclick="alignSelectedImage('center')">الصورة وسط</button>
     <button onclick="alignSelectedImage('left')">الصورة يسار</button>
-    <button onclick="deleteSelectedImage()">حذف الصورة المحددة</button>
+    <button class="danger" onclick="deleteSelectedImage()">حذف الصورة المحددة</button>
     <button onclick="showExtractPanel()">النص المستخرج</button>
   </div>
 
@@ -284,6 +292,7 @@ button{cursor:pointer;touch-action:manipulation}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 "use strict";
@@ -788,6 +797,92 @@ function deleteSelectedImage() {
   selectedImage.remove();
   selectedImage = null;
   updateStats();
+}
+
+/* تحميل الصورة المحددة / حفظ المستند كصورة */
+async function shareOrDownload(files, title) {
+  if (navigator.canShare && navigator.canShare({files})) {
+    try {
+      await navigator.share({files, title});
+      status("تمت المشاركة");
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") { status("تم الإلغاء"); return; }
+    }
+  }
+  files.forEach((f, i) => setTimeout(() => download(f, f.name), i * 400));
+  status("✓ تم تنزيل الصورة");
+}
+
+async function downloadSelectedImage() {
+  if (!selectedImage) { alert("المس الصورة داخل المستند أولاً لتحديدها."); return; }
+  try {
+    const blob = await (await fetch(selectedImage.src)).blob();
+    const ext = (blob.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    const file = new File([blob], "صورة_" + Date.now() + "." + ext, {type: blob.type || "image/png"});
+    await shareOrDownload([file], safeName());
+  } catch (e) {
+    console.error(e);
+    alert("تعذر تحميل الصورة.");
+  }
+}
+
+async function saveAsImage(split) {
+  if (typeof html2canvas === "undefined") {
+    alert("مكتبة الصورة لم تُحمّل. تحقق من الإنترنت.");
+    return;
+  }
+  status("جارٍ تجهيز الصورة...");
+  try {
+    page.querySelectorAll("img").forEach(i => i.classList.remove("selected-image"));
+    const canvas = await html2canvas(page, {
+      scale: 2,
+      backgroundColor: pageConfig.color || "#ffffff",
+      useCORS: true
+    });
+    const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+    const files = [];
+
+    if (!split) {
+      files.push(new File([await toBlob(canvas)], safeName() + ".png", {type: "image/png"}));
+    } else {
+      const pageH = Math.round(canvas.width * 1.4142);
+      const count = Math.max(1, Math.ceil(canvas.height / pageH));
+      for (let i = 0; i < count; i++) {
+        const h = Math.min(pageH, canvas.height - i * pageH);
+        const part = document.createElement("canvas");
+        part.width = canvas.width;
+        part.height = h;
+        const ctx = part.getContext("2d");
+        ctx.fillStyle = pageConfig.color || "#ffffff";
+        ctx.fillRect(0, 0, part.width, part.height);
+        ctx.drawImage(canvas, 0, i * pageH, canvas.width, h, 0, 0, canvas.width, h);
+        files.push(new File([await toBlob(part)], safeName() + "_" + (i + 1) + ".png", {type: "image/png"}));
+      }
+    }
+    await shareOrDownload(files, safeName());
+  } catch (e) {
+    console.error(e);
+    status("تعذر إنشاء الصورة");
+    alert("تعذر إنشاء الصورة.");
+  }
+}
+
+/* الدليل */
+function showHelp() {
+  showModal(
+    "<h3>❓ أين الخيارات؟</h3>" +
+    '<ul class="help-list">' +
+    "<li><b>📁 ملف:</b> مستند جديد، حفظ، تسمية، حفظ كصورة، Word، PDF، طباعة.</li>" +
+    "<li><b>✏️ نص:</b> غامق، مائل، تسطير، تراجع وإعادة.</li>" +
+    "<li><b>🔤 خط:</b> نوع الخط، الحجم، الألوان.</li>" +
+    "<li><b>☰ فقرة:</b> المحاذاة، القوائم، اتجاه الكتابة.</li>" +
+    "<li><b>➕ إدراج:</b> عناوين، جدول، فاصل صفحة، رفع صورة.</li>" +
+    "<li><b>📄 صفحة:</b> حجم الورق، الهوامش، الإطار، بحث واستبدال، استيراد، PDF، OCR.</li>" +
+    "<li><b>🖼 صورة:</b> رفع صورة، تحميل الصورة المحددة، حفظ المستند كصورة، تكبير وتصغير.</li>" +
+    "</ul>" +
+    '<div class="row"><button onclick="closeModal()">إغلاق</button></div>'
+  );
 }
 
 /* الرأس والتذييل والفواصل */

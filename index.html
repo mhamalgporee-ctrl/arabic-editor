@@ -16,27 +16,32 @@ button{cursor:pointer;touch-action:manipulation}
 
 .header{background:linear-gradient(135deg,#104e40,#19866b);color:#fff;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .header h1{font-size:15px;margin:0}
-.header small{display:none}
 .author{text-align:left;font-size:11px;line-height:1.4}
 
-.toolbar{position:sticky;top:0;z-index:50;background:#fffffff2;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);box-shadow:var(--shadow);padding:2px 4px}
-.tool-section{display:flex;gap:4px;align-items:center;overflow-x:auto;padding:3px 1px;scrollbar-width:none}
-.tool-section::-webkit-scrollbar{display:none}
-.tool-section+.tool-section{border-top:1px solid var(--line)}
-.tool-section button,.tool-section select,.tool-label{flex:0 0 auto;min-height:34px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);padding:3px 9px;font-size:12px;font-weight:700}
-.tool-section button:active{background:var(--accent2);transform:scale(.98)}
-.tool-section .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.tool-section .danger{color:var(--danger)}
-.tool-section select{max-width:130px;min-width:80px}
-.tool-label{display:flex;align-items:center;gap:4px;white-space:nowrap}
-.tool-label input[type=color]{width:22px;height:22px;border:0;padding:0;background:transparent}
-.tabs button{background:var(--accent2);border-color:var(--accent2);color:var(--accent)}
-.tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.toolbar{position:sticky;top:0;z-index:50;background:#fffffff2;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);box-shadow:var(--shadow);padding:4px}
+.quick{display:flex;gap:4px;align-items:center;overflow-x:auto;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.quick button{flex:0 0 auto;min-height:36px;min-width:36px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);padding:3px 10px;font-size:13px;font-weight:700}
+.quick button:active{background:var(--accent2)}
+.quick .menu-btn{background:var(--accent);color:#fff;border-color:var(--accent)}
+.quick .primary{background:var(--accent2);color:var(--accent);border-color:var(--accent2)}
+
+.menu{position:absolute;top:100%;right:6px;width:min(270px,92vw);max-height:72vh;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0003;padding:4px;z-index:60}
+.menu[hidden]{display:none}
+.m-group>.m-title{width:100%;display:flex;justify-content:space-between;align-items:center;min-height:42px;border:0;background:var(--accent2);color:var(--accent);border-radius:8px;padding:6px 12px;font-weight:700;font-size:14px;margin-top:3px}
+.m-group.open>.m-title{background:var(--accent);color:#fff}
+.m-items{display:none;padding:3px 2px}
+.m-group.open .m-items{display:block}
+.m-items button,.m-items select,.m-lab{display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;min-height:40px;border:0;border-bottom:1px solid #eef1ee;background:#fff;color:var(--text);padding:6px 10px;font-size:14px;text-align:right}
+.m-items button:active{background:var(--accent2)}
+.m-items .danger{color:var(--danger)}
+.m-items select{border:1px solid var(--line);border-radius:8px;margin:3px 0}
+.m-lab input[type=color]{width:34px;height:26px;border:0;padding:0;background:transparent}
 
 .info{max-width:1100px;margin:4px auto 2px;padding:0 12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 #status{color:var(--accent);font-weight:bold}
 
-.editor-wrap{padding:52px 4px 4px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
+.editor-wrap{padding:8px 4px 4px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
 #page{position:relative;background:#fff;color:#111;width:794px;max-width:100%;min-height:75vh;padding:68px 62px;outline:none;box-shadow:0 3px 18px #0002;border:1px solid #ddd;font-size:18px;line-height:1.9;direction:rtl;text-align:right;overflow-wrap:anywhere;word-break:normal}
 #page:empty:before{content:"ابدأ الكتابة هنا...";color:#aaa;pointer-events:none}
 #page p{margin:0 0 10px}
@@ -71,11 +76,10 @@ button{cursor:pointer;touch-action:manipulation}
 .doc-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
 .doc-item button{min-height:40px}
 .modal button{min-height:42px;padding:8px 12px;border-radius:9px}
-.help-list{line-height:2;padding-right:20px;margin:0}
 
 @media(max-width:600px){
   #page{min-height:80vh;padding:16px 14px;font-size:18px}
-  .editor-wrap{padding:52px 2px 2px}
+  .editor-wrap{padding:6px 2px 2px}
   .doc-item{align-items:flex-start;flex-direction:column}
 }
 
@@ -95,162 +99,20 @@ button{cursor:pointer;touch-action:manipulation}
 <body>
 
 <header class="header">
-  <div>
-    <h1>✍️ المحرر العربي الاحترافي</h1>
-    <small>كتابة وتنسيق وإدارة المستندات</small>
-  </div>
+  <div><h1>✍️ المحرر العربي الاحترافي</h1></div>
   <div class="author">إعداد وتطوير<br><b>محمد علي أحمد الحطاب</b></div>
 </header>
 
 <nav class="toolbar" aria-label="أدوات التحرير">
-
-  <div class="tool-section tabs" id="tabs">
-    <button onclick="showTab(0)">📁 ملف</button>
-    <button onclick="showTab(1)">✏️ نص</button>
-    <button onclick="showTab(2)">🔤 خط</button>
-    <button onclick="showTab(3)">☰ فقرة</button>
-    <button onclick="showTab(4)">➕ إدراج</button>
-    <button onclick="showTab(5)">📄 صفحة</button>
-    <button onclick="showTab(6)">🖼 صورة</button>
-    <button onclick="showHelp()">❓ دليل</button>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <button class="primary" onclick="newDocument()">＋ مستند جديد</button>
-    <button onclick="openDocuments()">📚 مستنداتي</button>
-    <button onclick="saveNow()">💾 حفظ</button>
-    <button onclick="renameDocument()">✏️ تسمية</button>
-    <button class="primary" onclick="saveAsImage(false)">🖼 حفظ كصورة</button>
-    <button class="primary" onclick="saveAsImage(true)">🖼 صور بالصفحات</button>
-    <button class="primary" onclick="exportDOCX()">📝 تصدير Word</button>
-    <button class="primary" onclick="makePDF()">📄 تصدير PDF</button>
-    <button onclick="window.print()">🖨 طباعة</button>
-    <button onclick="exportHTML()">🌐 HTML</button>
-    <button onclick="exportTXT()">📃 TXT</button>
-    <button class="danger" onclick="clearDocument()">🗑 مسح المحتوى</button>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <button onclick="cmd('bold')"><b>غامق</b></button>
-    <button onclick="cmd('italic')"><i>مائل</i></button>
-    <button onclick="cmd('underline')"><u>تسطير</u></button>
-    <button onclick="cmd('strikeThrough')">يتوسطه خط</button>
-    <button onclick="cmd('superscript')">مرتفع</button>
-    <button onclick="cmd('subscript')">منخفض</button>
-    <button onclick="cmd('removeFormat')">إزالة التنسيق</button>
-    <button onclick="undo()">↶ تراجع</button>
-    <button onclick="redo()">↷ إعادة</button>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <select onchange="setFont(this.value);this.selectedIndex=0">
-      <option value="">نوع الخط</option>
-      <option>Tahoma</option>
-      <option>Arial</option>
-      <option>Traditional Arabic</option>
-      <option>Simplified Arabic</option>
-      <option>Georgia</option>
-      <option>Times New Roman</option>
-      <option>Courier New</option>
-    </select>
-    <select onchange="setSize(this.value);this.selectedIndex=0">
-      <option value="">حجم الخط</option>
-      <option value="12px">12 صغير</option>
-      <option value="14px">14</option>
-      <option value="16px">16 عادي</option>
-      <option value="18px">18</option>
-      <option value="20px">20</option>
-      <option value="24px">24 كبير</option>
-      <option value="28px">28</option>
-      <option value="32px">32 عنوان</option>
-      <option value="40px">40</option>
-      <option value="48px">48 ضخم</option>
-    </select>
-    <label class="tool-label">لون الخط
-      <input type="color" value="#222222" oninput="applyColor('foreColor',this.value)">
-    </label>
-    <label class="tool-label">تمييز
-      <input type="color" value="#fff176" oninput="applyColor('hiliteColor',this.value)">
-    </label>
-    <label class="tool-label">لون الصفحة
-      <input type="color" value="#ffffff" onchange="setPageColor(this.value)">
-    </label>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <button onclick="align('right')">يمين</button>
-    <button onclick="align('center')">وسط</button>
-    <button onclick="align('left')">يسار</button>
-    <button onclick="align('justify')">ضبط النص</button>
-    <button onclick="cmd('insertUnorderedList')">• نقطية</button>
-    <button onclick="cmd('insertOrderedList')">١. رقمية</button>
-    <button onclick="cmd('indent')">زيادة المسافة</button>
-    <button onclick="cmd('outdent')">تقليل المسافة</button>
-    <button onclick="setDirection('rtl')">اتجاه عربي</button>
-    <button onclick="setDirection('ltr')">اتجاه إنجليزي</button>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <button onclick="heading('h1')">عنوان رئيسي</button>
-    <button onclick="heading('h2')">عنوان فرعي</button>
-    <button onclick="heading('h3')">عنوان صغير</button>
-    <button onclick="insertLine()">خط فاصل</button>
-    <button onclick="insertBox()">مربع نص</button>
-    <button onclick="insertQuote()">اقتباس</button>
-    <button onclick="insertTable()">📊 جدول</button>
-    <button onclick="addTableRow()">＋ صف</button>
-    <button onclick="addTableColumn()">＋ عمود</button>
-    <button onclick="insertPageBreak()">فاصل صفحة</button>
-    <button onclick="insertImagePicker()">📷 رفع صورة</button>
-    <input id="imageInput" type="file" accept="image/*" multiple hidden onchange="insertImages(this)">
-  </div>
-
-  <div class="tool-section" data-tab>
-    <select id="paperSize" onchange="setPaper(this.value)">
-      <option value="A4">ورق A4</option>
-      <option value="A5">ورق A5</option>
-      <option value="Letter">Letter</option>
-    </select>
-    <select id="pagePattern" onchange="setPattern(this.value)">
-      <option value="none">بدون نقش</option>
-      <option value="dots">نقاط</option>
-      <option value="lines">خطوط</option>
-      <option value="grid">مربعات</option>
-    </select>
-    <select id="frameStyle" onchange="setFrame(this.value)">
-      <option value="">إطار الصفحة</option>
-      <option value="none">بدون</option>
-      <option value="2px solid #333">عادي</option>
-      <option value="5px double #333">مزدوج</option>
-      <option value="3px dashed #333">متقطع</option>
-    </select>
-    <button onclick="setMargins()">هوامش الصفحة</button>
-    <button onclick="insertHeaderFooter()">رأس وتذييل</button>
-    <button onclick="insertPageNumber()">رقم صفحة</button>
-    <button onclick="openFind()">بحث واستبدال</button>
-    <button onclick="$('importInput').click()">استيراد ملف</button>
-    <input id="importInput" type="file" accept=".txt,.html,.htm,.pdf" hidden onchange="importFile(this)">
-    <button onclick="$('pdfInput').click()">قراءة PDF</button>
-    <input id="pdfInput" type="file" accept="application/pdf" hidden onchange="readPDF(this)">
-    <button onclick="$('ocrInput').click()">OCR صورة</button>
-    <input id="ocrInput" type="file" accept="image/*" hidden onchange="runOCR(this)">
-    <button onclick="window.print()">🖨 طباعة</button>
-  </div>
-
-  <div class="tool-section" data-tab>
-    <button class="primary" onclick="insertImagePicker()">📷 رفع صورة</button>
-    <button class="primary" onclick="downloadSelectedImage()">⬇ تحميل الصورة المحددة</button>
-    <button class="primary" onclick="saveAsImage(false)">🖼 حفظ المستند كصورة</button>
-    <button onclick="resizeSelectedImage(0.9)">تصغير الصورة</button>
-    <button onclick="resizeSelectedImage(1.1)">تكبير الصورة</button>
-    <button onclick="alignSelectedImage('right')">الصورة يمين</button>
-    <button onclick="alignSelectedImage('center')">الصورة وسط</button>
-    <button onclick="alignSelectedImage('left')">الصورة يسار</button>
-    <button class="danger" onclick="deleteSelectedImage()">حذف الصورة المحددة</button>
-    <button onclick="showExtractPanel()">النص المستخرج</button>
-  </div>
-
+  <div class="quick" id="quick"></div>
+  <div class="menu" id="menu" hidden></div>
 </nav>
+
+<input id="imageInput" type="file" accept="image/*" multiple hidden onchange="insertImages(this)">
+<input id="importInput" type="file" accept=".txt,.html,.htm,.pdf" hidden onchange="importFile(this)">
+<input id="pdfInput" type="file" accept="application/pdf" hidden onchange="readPDF(this)">
+<input id="pdf2wordInput" type="file" accept="application/pdf" hidden onchange="pdfToWord(this)">
+<input id="ocrInput" type="file" accept="image/*" hidden onchange="runOCR(this)">
 
 <div class="info">
   <span id="docTitle">مستند جديد</span>
@@ -313,17 +175,193 @@ let lastSearchIndex = -1;
 
 let pageConfig = {size:"A4",margin:15,pattern:"none",frame:"",color:"#ffffff",direction:"rtl"};
 
-/* تبويبات الأدوات: صف واحد ظاهر فقط لتبقى مساحة الكتابة كبيرة */
-let activeTab = 1;
-function showTab(index) {
-  activeTab = (activeTab === index) ? -1 : index;
-  document.querySelectorAll(".tool-section[data-tab]").forEach((section, i) => {
-    section.hidden = i !== activeTab;
-  });
-  document.querySelectorAll("#tabs button").forEach((btn, i) => {
-    btn.classList.toggle("active", i === activeTab);
+/* ========== القائمة المنسدلة ========== */
+const FONTS = ["Tahoma","Arial","Traditional Arabic","Simplified Arabic","Georgia","Times New Roman","Courier New"];
+const SIZES = [["12px","12 صغير"],["14px","14"],["16px","16 عادي"],["18px","18"],["20px","20"],["24px","24 كبير"],["28px","28"],["32px","32 عنوان"],["40px","40"],["48px","48 ضخم"]];
+
+const MENU = [
+  {title:"📁 ملف", items:[
+    {l:"＋ مستند جديد", f:()=>newDocument()},
+    {l:"📚 مستنداتي", f:()=>openDocuments()},
+    {l:"💾 حفظ", f:()=>saveNow()},
+    {l:"✏️ تسمية المستند", f:()=>renameDocument()},
+    {l:"📥 استيراد ملف", f:()=>$("importInput").click()},
+    {l:"🖨 طباعة", f:()=>window.print()},
+    {l:"🗑 مسح المحتوى", f:()=>clearDocument(), cls:"danger"}
+  ]},
+  {title:"📤 تصدير", items:[
+    {l:"📝 تصدير Word", f:()=>exportDOCX()},
+    {l:"📄 تصدير PDF", f:()=>makePDF()},
+    {l:"🖼 حفظ كصورة", f:()=>saveAsImage(false)},
+    {l:"🖼 صور بالصفحات", f:()=>saveAsImage(true)},
+    {l:"🌐 تصدير HTML", f:()=>exportHTML()},
+    {l:"📃 تصدير TXT", f:()=>exportTXT()}
+  ]},
+  {title:"✏️ نص", items:[
+    {l:"غامق", f:()=>cmd("bold")},
+    {l:"مائل", f:()=>cmd("italic")},
+    {l:"تسطير", f:()=>cmd("underline")},
+    {l:"يتوسطه خط", f:()=>cmd("strikeThrough")},
+    {l:"مرتفع", f:()=>cmd("superscript")},
+    {l:"منخفض", f:()=>cmd("subscript")},
+    {l:"إزالة التنسيق", f:()=>cmd("removeFormat")},
+    {l:"↶ تراجع", f:()=>undo()},
+    {l:"↷ إعادة", f:()=>redo()}
+  ]},
+  {title:"🔤 خط ولون", items:[
+    {t:"sel", ph:"نوع الخط", opts:FONTS.map(x=>[x,x]), f:v=>setFont(v)},
+    {t:"sel", ph:"حجم الخط", opts:SIZES, f:v=>setSize(v)},
+    {t:"color", l:"لون الخط", v:"#222222", ev:"input", f:v=>applyColor("foreColor",v)},
+    {t:"color", l:"تمييز النص", v:"#fff176", ev:"input", f:v=>applyColor("hiliteColor",v)},
+    {t:"color", l:"لون الصفحة", v:"#ffffff", ev:"change", f:v=>setPageColor(v)}
+  ]},
+  {title:"☰ فقرة", items:[
+    {l:"محاذاة يمين", f:()=>align("right")},
+    {l:"محاذاة وسط", f:()=>align("center")},
+    {l:"محاذاة يسار", f:()=>align("left")},
+    {l:"ضبط النص", f:()=>align("justify")},
+    {l:"• قائمة نقطية", f:()=>cmd("insertUnorderedList")},
+    {l:"١. قائمة رقمية", f:()=>cmd("insertOrderedList")},
+    {l:"زيادة المسافة", f:()=>cmd("indent")},
+    {l:"تقليل المسافة", f:()=>cmd("outdent")},
+    {l:"اتجاه عربي", f:()=>setDirection("rtl")},
+    {l:"اتجاه إنجليزي", f:()=>setDirection("ltr")}
+  ]},
+  {title:"➕ إدراج", items:[
+    {l:"عنوان رئيسي", f:()=>heading("h1")},
+    {l:"عنوان فرعي", f:()=>heading("h2")},
+    {l:"عنوان صغير", f:()=>heading("h3")},
+    {l:"خط فاصل", f:()=>insertLine()},
+    {l:"مربع نص", f:()=>insertBox()},
+    {l:"اقتباس", f:()=>insertQuote()},
+    {l:"📊 جدول", f:()=>insertTable()},
+    {l:"＋ صف للجدول", f:()=>addTableRow()},
+    {l:"＋ عمود للجدول", f:()=>addTableColumn()},
+    {l:"فاصل صفحة", f:()=>insertPageBreak()},
+    {l:"رأس وتذييل", f:()=>insertHeaderFooter()},
+    {l:"رقم صفحة", f:()=>insertPageNumber()},
+    {l:"📷 رفع صورة", f:()=>insertImagePicker()}
+  ]},
+  {title:"📄 صفحة", items:[
+    {t:"sel", id:"paperSize", ph:"حجم الورق", opts:[["A4","ورق A4"],["A5","ورق A5"],["Letter","Letter"]], f:v=>setPaper(v)},
+    {t:"sel", id:"pagePattern", ph:"نقش الصفحة", opts:[["none","بدون نقش"],["dots","نقاط"],["lines","خطوط"],["grid","مربعات"]], f:v=>setPattern(v)},
+    {t:"sel", id:"frameStyle", ph:"إطار الصفحة", opts:[["none","بدون إطار"],["2px solid #333","عادي"],["5px double #333","مزدوج"],["3px dashed #333","متقطع"]], f:v=>setFrame(v)},
+    {l:"هوامش الصفحة", f:()=>setMargins()},
+    {l:"🔍 بحث واستبدال", f:()=>openFind()}
+  ]},
+  {title:"🖼 صورة", items:[
+    {l:"📷 رفع صورة", f:()=>insertImagePicker()},
+    {l:"⬇ تحميل الصورة المحددة", f:()=>downloadSelectedImage()},
+    {l:"تكبير الصورة", f:()=>resizeSelectedImage(1.1)},
+    {l:"تصغير الصورة", f:()=>resizeSelectedImage(0.9)},
+    {l:"الصورة يمين", f:()=>alignSelectedImage("right")},
+    {l:"الصورة وسط", f:()=>alignSelectedImage("center")},
+    {l:"الصورة يسار", f:()=>alignSelectedImage("left")},
+    {l:"حذف الصورة المحددة", f:()=>deleteSelectedImage(), cls:"danger"}
+  ]},
+  {title:"📑 PDF و OCR", items:[
+    {l:"🔄 PDF إلى Word", f:()=>$("pdf2wordInput").click()},
+    {l:"قراءة نص PDF", f:()=>$("pdfInput").click()},
+    {l:"OCR لصورة", f:()=>$("ocrInput").click()},
+    {l:"النص المستخرج", f:()=>showExtractPanel()}
+  ]}
+];
+
+function buildMenu() {
+  const menu = $("menu");
+  MENU.forEach(group => {
+    const g = document.createElement("div");
+    g.className = "m-group";
+    const title = document.createElement("button");
+    title.className = "m-title";
+    title.innerHTML = "<span>" + group.title + "</span><span>▾</span>";
+    const box = document.createElement("div");
+    box.className = "m-items";
+
+    group.items.forEach(item => {
+      let el;
+      if (item.t === "sel") {
+        el = document.createElement("select");
+        if (item.id) el.id = item.id;
+        const ph = document.createElement("option");
+        ph.value = ""; ph.textContent = item.ph;
+        el.appendChild(ph);
+        item.opts.forEach(o => {
+          const op = document.createElement("option");
+          op.value = o[0]; op.textContent = o[1];
+          el.appendChild(op);
+        });
+        el.addEventListener("change", () => {
+          const v = el.value;
+          if (!v) return;
+          item.f(v);
+          if (!item.id) el.selectedIndex = 0;
+          closeMenu();
+        });
+      } else if (item.t === "color") {
+        el = document.createElement("label");
+        el.className = "m-lab";
+        el.innerHTML = "<span>" + item.l + "</span>";
+        const input = document.createElement("input");
+        input.type = "color"; input.value = item.v;
+        input.addEventListener(item.ev, () => item.f(input.value));
+        el.appendChild(input);
+      } else {
+        el = document.createElement("button");
+        el.textContent = item.l;
+        if (item.cls) el.className = item.cls;
+        el.addEventListener("click", () => { closeMenu(); item.f(); });
+      }
+      box.appendChild(el);
+    });
+
+    title.addEventListener("click", () => {
+      const open = g.classList.contains("open");
+      menu.querySelectorAll(".m-group").forEach(x => x.classList.remove("open"));
+      if (!open) g.classList.add("open");
+    });
+    g.appendChild(title);
+    g.appendChild(box);
+    menu.appendChild(g);
   });
 }
+
+function buildQuick() {
+  const quick = $("quick");
+  const items = [
+    ["☰ القائمة", toggleMenu, "menu-btn"],
+    ["<b>B</b>", () => cmd("bold")],
+    ["<i>I</i>", () => cmd("italic")],
+    ["<u>U</u>", () => cmd("underline")],
+    ["↶", () => undo()],
+    ["↷", () => redo()],
+    ["يمين", () => align("right")],
+    ["وسط", () => align("center")],
+    ["يسار", () => align("left")],
+    ["📷", () => insertImagePicker()],
+    ["📝 Word", () => exportDOCX(), "primary"],
+    ["📄 PDF", () => makePDF(), "primary"]
+  ];
+  items.forEach(it => {
+    const b = document.createElement("button");
+    b.innerHTML = it[0];
+    if (it[2]) b.className = it[2];
+    b.addEventListener("click", e => { e.stopPropagation(); if (!it[2] || it[2] !== "menu-btn") closeMenu(); it[1](); });
+    quick.appendChild(b);
+  });
+}
+
+function toggleMenu() { $("menu").hidden = !$("menu").hidden; }
+function closeMenu() { $("menu").hidden = true; }
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu") && !e.target.closest(".quick")) closeMenu();
+});
+
+/* منع فقدان التحديد عند الضغط على أزرار الأدوات */
+document.querySelector(".toolbar").addEventListener("mousedown", e => {
+  if (e.target.closest("button")) e.preventDefault();
+});
 
 function status(message) {
   $("status").textContent = message;
@@ -413,7 +451,7 @@ function applyPageConfig() {
   page.style.textAlign = pageConfig.direction === "ltr" ? "left" : "right";
   $("paperSize").value = pageConfig.size || "A4";
   $("pagePattern").value = pageConfig.pattern || "none";
-  $("frameStyle").value = pageConfig.frame || "";
+  $("frameStyle").value = pageConfig.frame === "0" ? "none" : (pageConfig.frame || "");
   setPattern(pageConfig.pattern || "none", false);
 }
 
@@ -716,6 +754,7 @@ function selectedCell() {
 }
 
 function addTableRow() {
+  restoreSelection();
   const cell = selectedCell();
   if (!cell) { alert("ضع المؤشر داخل خلية جدول أولاً."); return; }
   const row = cell.parentElement;
@@ -726,6 +765,7 @@ function addTableRow() {
 }
 
 function addTableColumn() {
+  restoreSelection();
   const cell = selectedCell();
   if (!cell) { alert("ضع المؤشر داخل خلية جدول أولاً."); return; }
   const table = cell.closest("table");
@@ -767,7 +807,7 @@ page.addEventListener("click", event => {
     page.querySelectorAll("img").forEach(img => img.classList.remove("selected-image"));
     selectedImage = event.target;
     selectedImage.classList.add("selected-image");
-  } else if (!event.target.closest("button")) {
+  } else {
     if (selectedImage) selectedImage.classList.remove("selected-image");
     selectedImage = null;
   }
@@ -866,23 +906,6 @@ async function saveAsImage(split) {
     status("تعذر إنشاء الصورة");
     alert("تعذر إنشاء الصورة.");
   }
-}
-
-/* الدليل */
-function showHelp() {
-  showModal(
-    "<h3>❓ أين الخيارات؟</h3>" +
-    '<ul class="help-list">' +
-    "<li><b>📁 ملف:</b> مستند جديد، حفظ، تسمية، حفظ كصورة، Word، PDF، طباعة.</li>" +
-    "<li><b>✏️ نص:</b> غامق، مائل، تسطير، تراجع وإعادة.</li>" +
-    "<li><b>🔤 خط:</b> نوع الخط، الحجم، الألوان.</li>" +
-    "<li><b>☰ فقرة:</b> المحاذاة، القوائم، اتجاه الكتابة.</li>" +
-    "<li><b>➕ إدراج:</b> عناوين، جدول، فاصل صفحة، رفع صورة.</li>" +
-    "<li><b>📄 صفحة:</b> حجم الورق، الهوامش، الإطار، بحث واستبدال، استيراد، PDF، OCR.</li>" +
-    "<li><b>🖼 صورة:</b> رفع صورة، تحميل الصورة المحددة، حفظ المستند كصورة، تكبير وتصغير.</li>" +
-    "</ul>" +
-    '<div class="row"><button onclick="closeModal()">إغلاق</button></div>'
-  );
 }
 
 /* الرأس والتذييل والفواصل */
@@ -1099,10 +1122,82 @@ async function importFile(input) {
   }
 }
 
-/* قراءة PDF */
+/* ========== قراءة PDF (مع OCR تلقائي للصفحات الممسوحة) ========== */
 function showExtractPanel() {
   $("extractPanel").hidden = false;
   $("extractPanel").scrollIntoView({behavior:"smooth"});
+}
+
+function setProgress(message) {
+  $("extractStatus").textContent = message;
+  status(message);
+}
+
+async function createOcrWorker() {
+  if (!window.Tesseract) throw new Error("مكتبة OCR غير متاحة");
+  return Tesseract.createWorker("ara+eng", 1, {
+    logger: m => {
+      if (m.status) setProgress(m.status + " " + Math.round((m.progress || 0) * 100) + "%");
+    }
+  });
+}
+
+function pageTextFromItems(items) {
+  const lines = [];
+  let currentLine = [];
+  let lastY = null;
+  items.filter(item => item.str).forEach(item => {
+    const y = item.transform[5];
+    if (lastY !== null && Math.abs(y - lastY) > 4) {
+      lines.push(currentLine.join(" "));
+      currentLine = [];
+    }
+    currentLine.push(item.str);
+    lastY = y;
+    if (item.hasEOL) {
+      lines.push(currentLine.join(" "));
+      currentLine = [];
+      lastY = null;
+    }
+  });
+  if (currentLine.length) lines.push(currentLine.join(" "));
+  return lines.join("\n");
+}
+
+/* يعيد مصفوفة نصوص الصفحات؛ وإذا كانت الصفحة صورة يشغّل OCR عليها */
+async function readPdfPages(file) {
+  if (!window.pdfjsLib) throw new Error("PDF.js غير متاحة");
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  const pages = [];
+  let worker = null;
+
+  try {
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pdfPage = await pdf.getPage(i);
+      setProgress("استخراج الصفحة " + i + " من " + pdf.numPages);
+      const content = await pdfPage.getTextContent();
+      let text = pageTextFromItems(content.items);
+
+      if (text.replace(/\s/g, "").length < 15) {
+        setProgress("الصفحة " + i + " صورة، جارٍ تشغيل OCR...");
+        if (!worker) worker = await createOcrWorker();
+        const viewport = pdfPage.getViewport({scale: 2});
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await pdfPage.render({canvasContext: canvas.getContext("2d"), viewport}).promise;
+        const result = await worker.recognize(canvas);
+        text = result.data.text || "";
+      }
+      pages.push(text);
+    }
+  } finally {
+    if (worker) { try { await worker.terminate(); } catch (e) { console.warn(e); } }
+  }
+  return pages;
 }
 
 async function readPDF(input) {
@@ -1113,79 +1208,64 @@ async function readPDF(input) {
 
 async function extractPDF(file) {
   showExtractPanel();
-  $("extractStatus").textContent = "جارٍ تحميل قارئ PDF...";
   $("extractedText").value = "";
-
+  setProgress("جارٍ تحميل قارئ PDF...");
   try {
-    if (!window.pdfjsLib) throw new Error("PDF.js غير متاحة");
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-    const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
-    const allPages = [];
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const pdfPage = await pdf.getPage(i);
-      const content = await pdfPage.getTextContent();
-      const items = content.items.filter(item => item.str);
-      let lines = [];
-      let currentLine = [];
-      let lastY = null;
-
-      items.forEach(item => {
-        const y = item.transform[5];
-        if (lastY !== null && Math.abs(y - lastY) > 4) {
-          lines.push(currentLine.join(" "));
-          currentLine = [];
-        }
-        currentLine.push(item.str);
-        lastY = y;
-        if (item.hasEOL) {
-          lines.push(currentLine.join(" "));
-          currentLine = [];
-          lastY = null;
-        }
-      });
-
-      if (currentLine.length) lines.push(currentLine.join(" "));
-      allPages.push(lines.join("\n"));
-      $("extractStatus").textContent = "استخراج الصفحة " + i + " من " + pdf.numPages;
-    }
-
-    $("extractedText").value = allPages.join("\n\n");
-    $("extractStatus").textContent = "اكتمل استخراج النص من PDF.";
+    const pages = await readPdfPages(file);
+    $("extractedText").value = pages.join("\n\n");
+    setProgress("اكتمل استخراج النص من PDF.");
   } catch (error) {
     console.error(error);
-    $("extractStatus").textContent = "تعذرت قراءة PDF. قد يكون الملف محمياً أو ممسوحاً ضوئياً.";
+    setProgress("تعذرت قراءة PDF. قد يكون الملف محمياً أو الإنترنت غير متاح.");
   }
 }
 
-/* التعرف الضوئي OCR */
+/* PDF إلى Word بضغطة واحدة */
+function textToHTML(text) {
+  return text.split(/\r?\n/).map(line => "<p>" + (esc(line) || "<br>") + "</p>").join("");
+}
+
+async function pdfToWord(input) {
+  const file = input.files[0];
+  input.value = "";
+  if (!file) return;
+  if (!confirm("سيتم استبدال محتوى المحرر بنص ملف PDF ثم تصديره كملف Word. هل تريد المتابعة؟")) return;
+  try {
+    setProgress("جارٍ تحويل PDF إلى Word...");
+    const pages = await readPdfPages(file);
+    const sep = '<div style="page-break-after:always"></div>';
+    page.innerHTML = pages.map(textToHTML).join(sep);
+    currentTitle = file.name.replace(/\.pdf$/i, "") || currentTitle;
+    $("docTitle").textContent = currentTitle;
+    resetSelection();
+    updateStats();
+    await exportDOCX();
+    setProgress("✓ تم التحويل. راجع النص في المحرر وعدّله ثم صدّر Word من جديد إن أردت.");
+  } catch (error) {
+    console.error(error);
+    setProgress("تعذر تحويل PDF. تحقق من الإنترنت أو جرّب ملفاً آخر.");
+    alert("تعذر تحويل PDF إلى Word.");
+  }
+}
+
+/* التعرف الضوئي OCR لصورة */
 async function runOCR(input) {
   const file = input.files[0];
   input.value = "";
   if (!file) return;
 
   showExtractPanel();
-  $("extractStatus").textContent = "جارٍ تشغيل التعرف الضوئي على الحروف...";
+  setProgress("جارٍ تشغيل التعرف الضوئي على الحروف...");
   let worker = null;
 
   try {
-    if (!window.Tesseract) throw new Error("مكتبة OCR غير متاحة");
-    worker = await Tesseract.createWorker("ara+eng", 1, {
-      logger: message => {
-        if (message.status) {
-          $("extractStatus").textContent =
-            message.status + " " + Math.round((message.progress || 0) * 100) + "%";
-        }
-      }
-    });
+    worker = await createOcrWorker();
     const result = await worker.recognize(file);
     $("extractedText").value = result.data.text || "";
-    $("extractStatus").textContent = "اكتمل التعرف على النص.";
+    setProgress("اكتمل التعرف على النص.");
   } catch (error) {
     console.error(error);
-    $("extractStatus").textContent = "تعذر تشغيل OCR. تحقق من الإنترنت وحاول بصورة أوضح.";
+    setProgress("تعذر تشغيل OCR. تحقق من الإنترنت وحاول بصورة أوضح.");
   } finally {
     if (worker) {
       try { await worker.terminate(); } catch (error) { console.warn(error); }
@@ -1198,7 +1278,7 @@ function moveExtractedToEditor() {
   if (!text.trim()) { alert("لا يوجد نص لنقله."); return; }
   if (!confirm("هل تريد استبدال محتوى المحرر بالنص المستخرج؟")) return;
 
-  page.innerHTML = text.split(/\r?\n/).map(line => "<p>" + (esc(line) || "<br>") + "</p>").join("");
+  page.innerHTML = textToHTML(text);
   $("extractPanel").hidden = true;
   resetSelection();
   updateStats();
@@ -1218,8 +1298,8 @@ page.addEventListener("paste", event => {
 
 /* الحالة الأولية */
 window.addEventListener("DOMContentLoaded", () => {
-  activeTab = -1;
-  showTab(1);
+  buildQuick();
+  buildMenu();
   applyPageConfig();
   updateStats(false);
   status("المحرر جاهز للكتابة");

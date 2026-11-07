@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#126b55">
-<meta name="description" content="المحرر العربي الاحترافي للمستندات - إعداد محمد علي احمد الحطاب ">
-<title>المحرر العربي الاحترافي | محمد علي احمد الحطاب</title>
+<meta name="description" content="المحرر العربي الاحترافي للمستندات - إعداد محمد علي أحمد الحطاب">
+<title>المحرر العربي الاحترافي | محمد علي أحمد الحطاب</title>
 <style>
 :root{--bg:#eef2ef;--text:#202722;--line:#d5ded8;--accent:#126b55;--accent2:#e5f3ed;--muted:#68756e;--danger:#b83232;--shadow:0 3px 14px #14251b12}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -36,7 +36,7 @@ button{cursor:pointer;touch-action:manipulation}
 .info{max-width:1100px;margin:4px auto 2px;padding:0 12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 #status{color:var(--accent);font-weight:bold}
 
-.editor-wrap{padding:4px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
+.editor-wrap{padding:52px 4px 4px;display:flex;justify-content:center;align-items:flex-start;gap:14px}
 #page{position:relative;background:#fff;color:#111;width:794px;max-width:100%;min-height:75vh;padding:68px 62px;outline:none;box-shadow:0 3px 18px #0002;border:1px solid #ddd;font-size:18px;line-height:1.9;direction:rtl;text-align:right;overflow-wrap:anywhere;word-break:normal}
 #page:empty:before{content:"ابدأ الكتابة هنا...";color:#aaa;pointer-events:none}
 #page p{margin:0 0 10px}
@@ -74,7 +74,7 @@ button{cursor:pointer;touch-action:manipulation}
 
 @media(max-width:600px){
   #page{min-height:80vh;padding:16px 14px;font-size:18px}
-  .editor-wrap{padding:2px}
+  .editor-wrap{padding:52px 2px 2px}
   .doc-item{align-items:flex-start;flex-direction:column}
 }
 
@@ -98,7 +98,7 @@ button{cursor:pointer;touch-action:manipulation}
     <h1>✍️ المحرر العربي الاحترافي</h1>
     <small>كتابة وتنسيق وإدارة المستندات</small>
   </div>
-  <div class="author">إعداد وتطوير<br><b>محمد علي احمد الحطاب</b></div>
+  <div class="author">إعداد وتطوير<br><b>محمد علي أحمد الحطاب</b></div>
 </header>
 
 <nav class="toolbar" aria-label="أدوات التحرير">
@@ -251,8 +251,7 @@ button{cursor:pointer;touch-action:manipulation}
 
 <main class="editor-wrap">
   <div id="page" contenteditable="true" spellcheck="true" dir="rtl" aria-label="مساحة كتابة المستند">
-    <p>بسم الله الرحمن الرحيم</p>
-    <p>ابدأ الكتابة هنا...</p>
+    <p><br></p>
   </div>
 </main>
 
@@ -276,7 +275,7 @@ button{cursor:pointer;touch-action:manipulation}
 
 <footer class="footer">
   <b>المحرر العربي الاحترافي للمستندات</b>
-  <p>تصميم وإعداد وتطوير: محمد علي احمد الحطاب</p>
+  <p>تصميم وإعداد وتطوير: محمد علي أحمد الحطاب</p>
   <p>إهداء مجاني لجميع المستخدمين</p>
 </footer>
 
@@ -1129,6 +1128,7 @@ window.addEventListener("DOMContentLoaded", () => {
   applyPageConfig();
   updateStats(false);
   status("المحرر جاهز للكتابة");
+  page.focus();
 });
 
 /* حفظ التعديلات عند مغادرة الصفحة */

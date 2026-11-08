@@ -584,7 +584,7 @@ async function openPdf(file){
  return pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
 }
 function askRange(n){
- const v=prompt("الملف فيه "+n+" صفحة. اكتب نطاق الصفحات (مثال 1-20 أو 21-40)، أو اكتب الكل:",n<=20?"الكل":"1-20");
+ const v=prompt("الملف فيه "+n+" صفحة. اكتب الكل لجميع الصفحات، أو نطاقاً مثل 1-50:","الكل");
  if(v===null)return null;
  const t=v.trim().replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632);
  if(!t||/^(الكل|all)$/i.test(t))return[1,n];
@@ -595,7 +595,8 @@ function askRange(n){
  return[a,b];
 }
 async function readPdf(pdf,range,onPage){
- const n=pdf.numPages,a=range?range[0]:1,b=range?range[1]:n,pages=[];let wk=null;stopFlag=false;
+ const n=pdf.numPages,a=range?range[0]:1,b=range?range[1]:n,pages=[];let wk=null,wl=null;stopFlag=false;
+ try{if(navigator.wakeLock)wl=await navigator.wakeLock.request("screen")}catch(e){}
  try{
   for(let i=a;i<=b&&!stopFlag;i++){
    curPg=i;const p=await pdf.getPage(i);prog("الصفحة "+i+" ("+(i-a+1)+" من "+(b-a+1)+")");
@@ -610,14 +611,13 @@ async function readPdf(pdf,range,onPage){
    pages.push(t);if(onPage)onPage(t,i);
    if(p.cleanup)p.cleanup();
   }
- }finally{if(wk)try{await wk.terminate()}catch(e){}}
+ }finally{if(wk)try{await wk.terminate()}catch(e){}if(wl)try{await wl.release()}catch(e){}}
  return pages;
 }
 async function extractPDF(f){
  showX();$("xt").value="";prog("جارٍ قراءة PDF...");
  try{
-  const pdf=await openPdf(f),r=askRange(pdf.numPages);
-  if(!r){prog("أُلغي الاستخراج.");return}
+  const pdf=await openPdf(f),r=[1,pdf.numPages];
   await readPdf(pdf,r,t=>{const x=$("xt");x.value+=(x.value?"\n\n":"")+t;x.scrollTop=x.scrollHeight});
   prog(stopFlag?"تم الإيقاف. النص المستخرج حتى الآن في الخانة.":"اكتمل استخراج النص.");
  }catch(e){console.error(e);prog("تعذرت قراءة PDF.")}
@@ -640,12 +640,12 @@ async function pdfAsImages(inp){
 }
 async function pdfToWord(inp){
  const f=inp.files[0];inp.value="";if(!f)return;
- if(!confirm("تحويل PDF إلى Word؟ سيحل محتواه محل محتوى المحرر ثم يُنزَّل ملف Word."))return;
+ if(!confirm("تحويل كل صفحات الـPDF إلى Word؟ قد يستغرق وقتاً للكتب الكبيرة. يمكنك الضغط على ⏹ إيقاف فيُصدَّر ما اكتمل منها. أبقِ الشاشة مفتوحة."))return;
  try{
   prog("جارٍ التحويل...");
-  const pdf=await openPdf(f),rg=askRange(pdf.numPages);
-  if(!rg){prog("أُلغي التحويل.");return}
-  const pages=await readPdf(pdf,rg);
+  const pdf=await openPdf(f);showX();$("xt").value="";
+  const pages=await readPdf(pdf,[1,pdf.numPages],t=>{const x=$("xt");x.value+=(x.value?"\n\n":"")+t});
+  if(!pages.length){prog("لم يُستخرج أي نص.");return}
   page.innerHTML=pages.map(textHTML).join('<div class="pb"></div>');
   title=f.name.replace(/\.pdf$/i,"")||title;$("docTitle").textContent=title;
   resetSel();stats();

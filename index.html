@@ -582,7 +582,6 @@ const dbPut=d=>dbOp("readwrite",s=>s.put(d));
 const dbGet=id=>dbOp("readonly",s=>s.get(id));
 const dbDel=id=>dbOp("readwrite",s=>s.delete(id));
 
-/* قائمة خفيفة: العنوان والتاريخ فقط */
 async function dbList(){
  const db=await openDB();
 
@@ -777,7 +776,6 @@ function applyDoc(d){
  counts();
 }
 
-/* يحفظ الحالي ثم يبدأ مستنداً جديداً (حتى لا يُكتب الاستيراد فوق القديم) */
 async function startFresh(){
  if(!(await flush())){
   alert("تعذر حفظ المستند الحالي. لم يتم الاستبدال حتى لا تفقد التعديلات.");
@@ -946,7 +944,7 @@ function ins(h){
  }
 }
 
-/* تغيير حجم النص المحدد (عبر execCommand ليبقى التراجع يعمل) */
+/* حل مشكلة تغيير حجم النص ليعمل بدقة تامة ويدعم التراجع */
 function setSize(sz){
  restore();
 
@@ -1069,7 +1067,6 @@ function pickImg(){
  $("imageInput").click();
 }
 
-/* تصغير الصورة قبل إدراجها لتقليل حجم التخزين */
 function shrinkImg(f){
  return new Promise((res,rej)=>{
   const rd=new FileReader();
@@ -1239,7 +1236,6 @@ page.addEventListener("paste",e=>{
  }
 });
 
-/* منع إسقاط HTML خارجي داخل المحرر: يُقبل النص العادي فقط */
 page.addEventListener("dragover",e=>e.preventDefault());
 page.addEventListener("drop",e=>{
  e.preventDefault();
@@ -1250,7 +1246,7 @@ page.addEventListener("drop",e=>{
  }
 });
 
-/* ===== التنزيل ===== */
+/* ===== التنزيل والتصدير ===== */
 function download(blob,name){
  const u=URL.createObjectURL(blob);
  const a=document.createElement("a");
@@ -1266,7 +1262,6 @@ function download(blob,name){
  status("✓ تم التنزيل: "+name);
 }
 
-/* ===== التصدير بالصفحات (حل مشكلة الصفحات الفارغة في المستندات الطويلة) ===== */
 const BLOCK_RE=/^(p|div|h[1-6]|ul|ol|table|blockquote|pre|hr)$/;
 
 function pageGeom(){
@@ -1331,7 +1326,6 @@ function hasContent(n){
  return!!(n.textContent||"").trim()||!!n.querySelector("img,table,hr");
 }
 
-/* تقسيم المستند إلى صفحات بحسب ارتفاع كل فقرة، فلا يُقطع سطر في المنتصف */
 async function buildGroups(g){
  const root=document.createElement("div");
  root.innerHTML=sanitize(page.innerHTML);
@@ -1457,7 +1451,6 @@ function blankPage(g,scale){
  return c;
 }
 
-/* ينتج كل صفحة بحجم الورقة الكامل ويمررها إلى cb. يعيد عدد الصفحات، أو false عند الإلغاء */
 async function eachPage(cb,scale){
  if(typeof html2canvas==="undefined")
   throw new Error("مكتبة html2canvas غير متاحة");
@@ -1511,7 +1504,6 @@ const toBlob=(c,t="image/png",q)=>new Promise((r,j)=>{
  c.toBlob(b=>b?r(b):j(new Error("تعذر إنشاء الصورة")),t,q);
 });
 
-/* ===== تصدير PDF ===== */
 async function exportPDF(){
  if(!window.jspdf){
   alert("مكتبة PDF غير متاحة. تحقق من الاتصال بالإنترنت.");
@@ -1558,7 +1550,6 @@ async function exportPDF(){
  }
 }
 
-/* ===== تصدير الصور ===== */
 async function exportImage(split){
  status("جارٍ تجهيز الصورة...");
 
@@ -2128,7 +2119,7 @@ async function exportDOCX(){
  }
 }
 
-/* ===== البحث والاستبدال (يتجاهل التشكيل ويوحّد الهمزات) ===== */
+/* ===== البحث والاستبدال ===== */
 function openFind(){
  sIdx=-1;
  sM=[];
@@ -2390,7 +2381,6 @@ async function ocrWorker(psm){
  let w;
 
  try{
-  /* بيانات لغة أدق (best)، وإن تعذر تحميلها نرجع للافتراضي */
   w=await Tesseract.createWorker("ara+eng",1,{
    langPath:"https://tessdata.projectnaptha.com/4.0.0_best",
    logger
@@ -2493,7 +2483,6 @@ function askRange(n){
  return[a,b];
 }
 
-/* ===== تنظيف النص: حذف الرموز والزخارف والنجوم والأحرف الخفية ===== */
 const JUNK_RE=/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\u061C\uFEFF\u00AD\uFFFC\uFFFD\uFE0E\uFE0F\u06DE\u06E9\u2022\u2023\u2043\u2042\u203B\u2055\u2190-\u23FF\u2460-\u27BF\u2900-\u2BFF\uE000-\uF8FF]|[\u{1F000}-\u{1FAFF}]/gu;
 
 function cleanLine(s){
@@ -2520,7 +2509,6 @@ function cleanText(t){
   .join("\n");
 }
 
-/* دمج أسطر الفقرة الواحدة، وفصل الفقرات عند نهاية الجملة أو السطر القصير أو الشرطة/الترقيم */
 function toParas(text){
  const lines=String(text).split(/\r?\n/).map(l=>l.trim());
  let maxLen=0;
@@ -2558,7 +2546,6 @@ function toParas(text){
  return paras.map(p=>"<p>"+esc(p)+"</p>").join("");
 }
 
-/* ===== كشف وإصلاح عطل الحروف المركّبة (لا ← ال) في بعض ملفات PDF ===== */
 function ligBad(t){
  return(
   /(^|[^\u0621-\u064A])[وفبكلس]{0,2}ا(?:أل|إل|آل)/.test(t)||
@@ -2596,7 +2583,6 @@ function ligRepair(t){
  ).join("\n");
 }
 
-/* ===== معالجة صورة الصفحة قبل OCR: رمادي ثم أبيض وأسود (Otsu) لإزالة النقوش ===== */
 function binarize(c){
  const x=c.getContext("2d");
  const im=x.getImageData(0,0,c.width,c.height);
@@ -2609,7 +2595,7 @@ function binarize(c){
   const v=(d[4*i]*299+d[4*i+1]*587+d[4*i+2]*114)/1000|0;
   g[i]=v;
   hist[v]++;
- }
+}
 
  let sum=0;
  for(let i=0;i<256;i++)sum+=i*hist[i];
@@ -2667,7 +2653,6 @@ async function ocrPage(p,wk){
  c.width=1;
  c.height=1;
 
- /* نتجاهل الأسطر ضعيفة الثقة (غالباً زخارف أو خط تزييني) */
  if(d.lines&&d.lines.length){
   return d.lines
    .filter(l=>l.text&&(l.confidence==null||l.confidence>=55))
@@ -2680,10 +2665,10 @@ async function ocrPage(p,wk){
 
 function askMode(){
  const v=prompt(
-  "طريقة الاستخراج:\n"+
-  "1 = تلقائي (موصى به): نص PDF، وOCR للصفحات المصوّرة أو المعطوبة\n"+
-  "2 = OCR لكل الصفحات\n"+
-  "3 = نص PDF فقط (مع إصلاح جزئي للحروف المركّبة)",
+  "اختر طريقة استخراج النصوص (أو تحويل PDF إلى Word):\n\n"+
+  "1 = تلقائي (موصى به): قراءة النص المباشر، وتشغيل OCR تلقائياً للصفحات التالفة أو المصورة\n"+
+  "2 = OCR لكل الصفحات (الخيار الأمثل للكتب المصورة أو التي فيها خربطة وحروف مقلوبة)\n"+
+  "3 = استخراج النص المباشر فقط (سريع جداً بدون OCR)",
   "1"
  );
 
@@ -2778,7 +2763,7 @@ function infoNote(pages){
 
  return(
   (f.ocr?" — OCR لـ "+f.ocr+" صفحة":"")+
-  (f.fix?" — أُصلحت الحروف المركّبة جزئياً في "+f.fix+" صفحة، راجع النص":"")
+  (f.fix?" — أُصلحت الحروف المركّبة جزئياً في "+f.fix+" صفحة":"")
  );
 }
 
@@ -2814,7 +2799,6 @@ async function extractPDF(f){
  }
 }
 
-/* ===== تحويل PDF إلى صور ===== */
 async function pdfAsImages(inp){
  const f=inp.files[0];
  inp.value="";
@@ -2869,7 +2853,6 @@ async function pdfAsImages(inp){
  }
 }
 
-/* ===== تحويل PDF إلى Word ===== */
 async function pdfToWord(inp){
  const f=inp.files[0];
  inp.value="";
@@ -2877,7 +2860,7 @@ async function pdfToWord(inp){
  if(!f)return;
 
  if(!confirm(
-  "تحويل صفحات PDF إلى Word نصاً فقط (بلا رموز أو زخارف أو صور)؟ سيُنشأ مستند جديد ويبقى الحالي محفوظاً. قد يستغرق وقتاً للكتب الكبيرة. يمكنك الضغط على إيقاف فيُصدَّر ما اكتمل منها. أبقِ الشاشة مفتوحة."
+  "تحويل صفحات PDF إلى Word نصاً فقط؟ سيُنشأ مستند جديد ويبقى الحالي محفوظاً. أبقِ الشاشة مفتوحة."
  ))return;
 
  const mode=askMode();
@@ -2930,7 +2913,6 @@ async function pdfToWord(inp){
  }
 }
 
-/* ===== OCR للصورة ===== */
 async function runOCR(inp){
  const f=inp.files[0];
  inp.value="";
@@ -2992,7 +2974,6 @@ function dlX(){
  );
 }
 
-/* ===== ربط أزرار اختيار الملفات ===== */
 $("imageInput").onchange=function(){addImgs(this)};
 $("importInput").onchange=function(){importFile(this)};
 
@@ -3006,7 +2987,6 @@ $("p2wInput").onchange=function(){pdfToWord(this)};
 $("ocrInput").onchange=function(){runOCR(this)};
 $("pdfImgInput").onchange=function(){pdfAsImages(this)};
 
-/* ===== حفظ تلقائي عند مغادرة الصفحة ===== */
 document.addEventListener("visibilitychange",()=>{
  if(document.visibilityState==="hidden")flush();
 });
@@ -3015,7 +2995,6 @@ addEventListener("pagehide",()=>{
  flush();
 });
 
-/* ===== بدء المحرر ===== */
 window.addEventListener("DOMContentLoaded",async()=>{
  try{
   document.execCommand("defaultParagraphSeparator",false,"p");

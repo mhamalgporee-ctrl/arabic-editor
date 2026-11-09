@@ -1266,56 +1266,245 @@ function download(blob,name){
  status("✓ تم التنزيل: "+name);
 }
 
-function cleanBox(){
- const w=document.createElement("div");
+/* ===== التصدير بالصفحات (حل مشكلة الصفحات الفارغة في المستندات الطويلة) ===== */
+const BLOCK_RE=/^(p|div|h[1-6]|ul|ol|table|blockquote|pre|hr)$/;
+
+function pageGeom(){
  const W=(SIZES[cfg.size]||SIZES.A4).w;
+ const mm={A4:[210,297],A5:[148,210],Letter:[215.9,279.4]}[cfg.size]||[210,297];
+ const H=Math.round(W*mm[1]/mm[0]);
+ const pad=Math.round(cfg.margin*3.78);
 
- w.className="xc";
- w.dir=cfg.direction;
+ return{W,H,pad,contentH:H-2*pad};
+}
 
- w.style.cssText=
-  "position:fixed;left:-99999px;top:0;width:"+W+
-  "px;background:#fff;color:#000;padding:"+
-  Math.round(cfg.margin*3.78)+
-  "px;font:19px/2 Cairo,Tahoma,Arial,sans-serif;text-align:"+
-  (cfg.direction==="ltr"?"left":"right");
-
- w.innerHTML=
-  "<style>"+
+function boxCss(g){
+ return(
   ".xc p{margin:0 0 12px}"+
-  ".xc img{max-width:100%;height:auto;display:block;margin:16px auto}"+
+  ".xc img{max-width:100%;max-height:"+Math.max(100,g.contentH-40)+"px;object-fit:contain;height:auto;display:block;margin:16px auto}"+
   ".xc table{width:100%;border-collapse:collapse}"+
   ".xc td,.xc th{border:1px solid #666;padding:8px}"+
   ".xc th{font-weight:700}"+
   ".xc blockquote{border-right:3px solid #bbb;margin:16px 0;padding:2px 14px;color:#555}"+
   ".xc hr{border:0;border-top:2px solid #ccc}"+
-  ".xc .pb{height:1px;border-top:2px dashed #999}"+
-  "</style>"+sanitize(page.innerHTML);
+  ".xc ul,.xc ol{padding-right:32px}"+
+  ".xc .pb{height:1px;border-top:2px dashed #999}"
+ );
+}
 
- document.body.appendChild(w);
+function mkBox(g,padCss){
+ const w=document.createElement("div");
+
+ w.className="xc xcp";
+ w.dir=cfg.direction;
+
+ w.style.cssText=
+  "position:fixed;left:-99999px;top:0;width:"+g.W+
+  "px;box-sizing:border-box;background:#fff;color:#000;padding:"+padCss+
+  ";font:19px/2 Cairo,Tahoma,Arial,sans-serif;text-align:"+
+  (cfg.direction==="ltr"?"left":"right");
+
+ const st=document.createElement("style");
+ st.textContent=boxCss(g);
+ w.appendChild(st);
+
  return w;
 }
 
-async function render(){
+function cleanBox(){
+ const g=pageGeom();
+ const w=mkBox(g,g.pad+"px");
+
+ w.insertAdjacentHTML("beforeend",sanitize(page.innerHTML));
+ document.body.appendChild(w);
+
+ return w;
+}
+
+function hasContent(n){
+ if(n.nodeType!==1)return!!(n.textContent||"").trim();
+
+ const t=n.tagName.toLowerCase();
+
+ if(t==="hr"||t==="img"||t==="table")return true;
+
+ return!!(n.textContent||"").trim()||!!n.querySelector("img,table,hr");
+}
+
+/* تقسيم المستند إلى صفحات بحسب ارتفاع كل فقرة، فلا يُقطع سطر في المنتصف */
+async function buildGroups(g){
+ const root=document.createElement("div");
+ root.innerHTML=sanitize(page.innerHTML);
+
+ const nodes=[];
+ let run=null;
+
+ [...root.childNodes].forEach(n=>{
+  const isBlock=n.nodeType===1&&BLOCK_RE.test(n.tagName.toLowerCase());
+
+  if(isBlock){
+   run=null;
+   nodes.push(n);
+   return;
+  }
+
+  if(n.nodeType===3&&!n.textContent.trim())return;
+  if(n.nodeType!==1&&n.nodeType!==3)return;
+
+  if(!run){
+   run=document.createElement("div");
+   nodes.push(run);
+  }
+
+  run.appendChild(n);
+ });
+
+ const m=mkBox(g,g.pad+"px");
+ nodes.forEach(n=>m.appendChild(n));
+ document.body.appendChild(m);
+
+ try{
+  await Promise.all([...m.querySelectorAll("img")].map(i=>
+   i.complete?0:new Promise(r=>{i.onload=i.onerror=r})
+  ));
+
+  if(document.fonts&&document.fonts.ready){
+   try{await document.fonts.ready}catch(e){}
+  }
+
+  const hs=nodes.map(n=>{
+   if(n.classList.contains("pb"))return 0;
+
+   const cs=getComputedStyle(n);
+
+   return n.offsetHeight+(parseFloat(cs.marginTop)||0)+(parseFloat(cs.marginBottom)||0);
+  });
+
+  const groups=[];
+  let cur=[],curH=0;
+
+  const flush=()=>{
+   if(cur.length)groups.push({nodes:cur,tall:false});
+   cur=[];
+   curH=0;
+  };
+
+  nodes.forEach((n,i)=>{
+   if(n.classList.contains("pb")){flush();return}
+
+   const h=hs[i];
+
+   if(h>g.contentH){
+    flush();
+    groups.push({nodes:[n],tall:true});
+    return;
+   }
+
+   if(curH+h>g.contentH)flush();
+
+   cur.push(n);
+   curH+=h;
+  });
+
+  flush();
+
+  return groups.filter(grp=>grp.nodes.some(hasContent));
+
+ }finally{
+  m.remove();
+ }
+}
+
+async function renderGroup(grp,g,scale){
+ const box=mkBox(g,grp.tall?"0 "+g.pad+"px":g.pad+"px");
+
+ grp.nodes.forEach(n=>box.appendChild(n));
+ document.body.appendChild(box);
+
+ try{
+  return await html2canvas(box,{
+   scale,
+   backgroundColor:"#fff",
+   useCORS:true,
+   logging:false,
+   scrollX:0,
+   scrollY:0,
+   windowWidth:g.W,
+   onclone:doc=>{
+    const b=doc.querySelector(".xcp");
+    if(b){
+     b.style.position="absolute";
+     b.style.left="0";
+     b.style.top="0";
+    }
+   }
+  });
+ }finally{
+  box.remove();
+ }
+}
+
+function blankPage(g,scale){
+ const c=document.createElement("canvas");
+
+ c.width=Math.round(g.W*scale);
+ c.height=Math.round(g.H*scale);
+
+ const x=c.getContext("2d");
+ x.fillStyle="#fff";
+ x.fillRect(0,0,c.width,c.height);
+
+ return c;
+}
+
+/* ينتج كل صفحة بحجم الورقة الكامل ويمررها إلى cb. يعيد عدد الصفحات، أو false عند الإلغاء */
+async function eachPage(cb,scale){
  if(typeof html2canvas==="undefined")
   throw new Error("مكتبة html2canvas غير متاحة");
 
- if(document.fonts&&document.fonts.ready){
-  try{await document.fonts.ready}catch(e){}
+ scale=scale||2;
+
+ const g=pageGeom();
+ const groups=await buildGroups(g);
+
+ if(groups.length>40&&!confirm(
+  "المستند كبير (نحو "+groups.length+" صفحة) وقد يستغرق التصدير وقتاً. متابعة؟"
+ ))return false;
+
+ let idx=0;
+
+ for(const grp of groups){
+  const c=await renderGroup(grp,g,scale);
+
+  if(!grp.tall){
+   const pc=blankPage(g,scale);
+   pc.getContext("2d").drawImage(c,0,0);
+   await cb(pc,idx++);
+  }else{
+   const cH=Math.round(g.contentH*scale);
+   const n=Math.max(1,Math.ceil(c.height/cH));
+
+   for(let k=0;k<n;k++){
+    const h=Math.min(cH,c.height-k*cH);
+    const pc=blankPage(g,scale);
+
+    pc.getContext("2d").drawImage(
+     c,0,k*cH,c.width,h,
+     0,Math.round(g.pad*scale),c.width,h
+    );
+
+    await cb(pc,idx++);
+   }
+  }
+
+  c.width=1;
+  c.height=1;
+
+  status("تجهيز الصفحات: "+idx+" من نحو "+groups.length);
+  await new Promise(r=>setTimeout(r,0));
  }
 
- const w=cleanBox();
-
- try{
-  return await html2canvas(w,{
-   scale:2,
-   backgroundColor:"#fff",
-   useCORS:true,
-   logging:false
-  });
- }finally{
-  w.remove();
- }
+ return idx;
 }
 
 const toBlob=(c,t="image/png",q)=>new Promise((r,j)=>{
@@ -1332,8 +1521,6 @@ async function exportPDF(){
  status("جارٍ إنشاء PDF...");
 
  try{
-  const cv=await render();
-
   const pdf=new window.jspdf.jsPDF({
    unit:"mm",
    format:(SIZES[cfg.size]||SIZES.A4).pdf
@@ -1342,35 +1529,24 @@ async function exportPDF(){
   const pw=pdf.internal.pageSize.getWidth();
   const ph=pdf.internal.pageSize.getHeight();
 
-  const pxH=Math.floor(cv.width*ph/pw);
-  const n=Math.max(1,Math.ceil(cv.height/pxH));
-
-  for(let i=0;i<n;i++){
-   const h=Math.min(pxH,cv.height-i*pxH);
-   const p=document.createElement("canvas");
-
-   p.width=cv.width;
-   p.height=h;
-
-   const x=p.getContext("2d");
-   x.fillStyle="#fff";
-   x.fillRect(0,0,p.width,h);
-
-   x.drawImage(cv,0,i*pxH,cv.width,h,0,0,cv.width,h);
-
+  const total=await eachPage(async(pc,i)=>{
    if(i)pdf.addPage();
 
-   pdf.addImage(
-    p.toDataURL("image/jpeg",.92),
-    "JPEG",
-    0,
-    0,
-    pw,
-    h*pw/cv.width
-   );
+   pdf.addImage(pc.toDataURL("image/jpeg",.92),"JPEG",0,0,pw,ph);
 
-   p.width=1;
-   p.height=1;
+   pc.width=1;
+   pc.height=1;
+  },2);
+
+  if(total===false){
+   status("تم الإلغاء");
+   return;
+  }
+
+  if(!total){
+   status("المستند فارغ");
+   alert("المستند فارغ.");
+   return;
   }
 
   download(pdf.output("blob"),safeName()+".pdf");
@@ -1386,41 +1562,69 @@ async function exportPDF(){
 async function exportImage(split){
  status("جارٍ تجهيز الصورة...");
 
- try{
-  const cv=await render();
+ let tooLong=false;
 
-  if(!split){
-   download(await toBlob(cv),safeName()+".png");
+ try{
+  if(split){
+   const total=await eachPage(async(pc,i)=>{
+    download(await toBlob(pc),safeName()+"_صفحة_"+(i+1)+".png");
+
+    pc.width=1;
+    pc.height=1;
+
+    await new Promise(r=>setTimeout(r,500));
+   },2);
+
+   if(total===false)status("تم الإلغاء");
+   else if(!total)alert("المستند فارغ.");
+
    return;
   }
 
-  const ph=Math.round(cv.width*1.4142);
-  const n=Math.max(1,Math.ceil(cv.height/ph));
+  const pages=[];
 
-  for(let i=0;i<n;i++){
-   const h=Math.min(ph,cv.height-i*ph);
-   const p=document.createElement("canvas");
+  const total=await eachPage(pc=>{
+   if(pages.length>=9){
+    tooLong=true;
+    throw new Error("long");
+   }
+   pages.push(pc);
+  },1.5);
 
-   p.width=cv.width;
-   p.height=h;
-
-   const x=p.getContext("2d");
-   x.fillStyle="#fff";
-   x.fillRect(0,0,p.width,h);
-   x.drawImage(cv,0,i*ph,cv.width,h,0,0,cv.width,h);
-
-   download(await toBlob(p),safeName()+"_صفحة_"+(i+1)+".png");
-
-   p.width=1;
-   p.height=1;
-
-   await new Promise(r=>setTimeout(r,500));
+  if(total===false){
+   status("تم الإلغاء");
+   return;
   }
+
+  if(!pages.length){
+   alert("المستند فارغ.");
+   return;
+  }
+
+  const out=document.createElement("canvas");
+
+  out.width=pages[0].width;
+  out.height=pages.reduce((a,p)=>a+p.height,0);
+
+  const x=out.getContext("2d");
+  let y=0;
+
+  pages.forEach(p=>{
+   x.drawImage(p,0,y);
+   y+=p.height;
+  });
+
+  download(await toBlob(out),safeName()+".png");
 
  }catch(e){
   console.error(e);
   status("تعذر إنشاء الصورة");
-  alert("تعذر إنشاء الصورة.");
+
+  if(tooLong){
+   alert("المستند أطول من أن يُحفظ كصورة واحدة. استخدم «صور بالصفحات».");
+  }else{
+   alert("تعذر إنشاء الصورة.");
+  }
  }
 }
 
@@ -2172,18 +2376,38 @@ function prog(m){
 
 let stopFlag=false,curPg=0;
 
-async function ocrWorker(){
+async function ocrWorker(psm){
  if(!window.Tesseract)throw new Error("مكتبة OCR غير متاحة");
 
- return Tesseract.createWorker("ara+eng",1,{
-  logger:m=>{
-   if(m.status==="recognizing text"){
-    prog("الصفحة "+curPg+" — OCR "+Math.round((m.progress||0)*100)+"%");
-   }else if(m.status){
-    prog("OCR: تجهيز ("+m.status+")");
-   }
+ const logger=m=>{
+  if(m.status==="recognizing text"){
+   prog("الصفحة "+curPg+" — OCR "+Math.round((m.progress||0)*100)+"%");
+  }else if(m.status){
+   prog("OCR: تجهيز ("+m.status+")");
   }
- });
+ };
+
+ let w;
+
+ try{
+  /* بيانات لغة أدق (best)، وإن تعذر تحميلها نرجع للافتراضي */
+  w=await Tesseract.createWorker("ara+eng",1,{
+   langPath:"https://tessdata.projectnaptha.com/4.0.0_best",
+   logger
+  });
+ }catch(e){
+  console.warn(e);
+  w=await Tesseract.createWorker("ara+eng",1,{logger});
+ }
+
+ try{
+  await w.setParameters({
+   tessedit_pageseg_mode:String(psm||"6"),
+   preserve_interword_spaces:"1"
+  });
+ }catch(e){console.warn(e)}
+
+ return w;
 }
 
 function itemsText(items){
@@ -2224,11 +2448,6 @@ function needOcr(t){
 
  if(a+l<15)return true;
  return b/(a+l+b)>0.08;
-}
-
-/* توحيد أشكال العرض العربية (FB50–FEFF) إلى الحروف العادية */
-function fixRev(t){
- return t.normalize("NFKC");
 }
 
 async function openPdf(file){
@@ -2274,13 +2493,216 @@ function askRange(n){
  return[a,b];
 }
 
-async function readPdf(pdf,range,onPage){
+/* ===== تنظيف النص: حذف الرموز والزخارف والنجوم والأحرف الخفية ===== */
+const JUNK_RE=/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\u061C\uFEFF\u00AD\uFFFC\uFFFD\uFE0E\uFE0F\u06DE\u06E9\u2022\u2023\u2043\u2042\u203B\u2055\u2190-\u23FF\u2460-\u27BF\u2900-\u2BFF\uE000-\uF8FF]|[\u{1F000}-\u{1FAFF}]/gu;
+
+function cleanLine(s){
+ return String(s)
+  .normalize("NFKC")
+  .replace(JUNK_RE,"")
+  .replace(/[*_=~#^|]{3,}/g," ")
+  .replace(/[-–—]{3,}/g," ")
+  .replace(/\.{5,}/g," ")
+  .replace(/(^|\s)[*#^|~_=]+(?=\s|$)/g,"$1")
+  .replace(/[ \t\u00A0\u2000-\u200A\u202F]+/g," ")
+  .replace(/\s+([،؛؟!:.])/g,"$1")
+  .replace(/([،؛؟!:])(?=[\p{L}])/gu,"$1 ")
+  .replace(/\s+([\u064B-\u0652])/g,"$1")
+  .replace(/([\u0621-\u064A\u064B-\u0652])\.(?=[\u0621-\u064A])/g,"$1. ")
+  .trim();
+}
+
+function cleanText(t){
+ return String(t||"")
+  .split(/\r?\n/)
+  .map(cleanLine)
+  .filter(l=>/[\p{L}\p{N}]/u.test(l))
+  .join("\n");
+}
+
+/* دمج أسطر الفقرة الواحدة، وفصل الفقرات عند نهاية الجملة أو السطر القصير أو الشرطة/الترقيم */
+function toParas(text){
+ const lines=String(text).split(/\r?\n/).map(l=>l.trim());
+ let maxLen=0;
+ lines.forEach(l=>{if(l.length>maxLen)maxLen=l.length});
+
+ const paras=[];
+ let cur="",prevLen=0;
+
+ for(const l of lines){
+  if(!l){
+   if(cur){paras.push(cur);cur=""}
+   continue;
+  }
+
+  if(cur){
+   const ends=/[.!؟?:؛;»”"…)\]]$/.test(cur);
+   const short=prevLen<maxLen*0.72;
+   const starter=/^([-–—*«“"]|\d+\s*[.\-)]|[٠-٩]+\s*[.\-)])\s*/.test(l);
+
+   if(ends||short||starter){
+    paras.push(cur);
+    cur=l;
+   }else{
+    cur+=" "+l;
+   }
+  }else{
+   cur=l;
+  }
+
+  prevLen=l.length;
+ }
+
+ if(cur)paras.push(cur);
+
+ return paras.map(p=>"<p>"+esc(p)+"</p>").join("");
+}
+
+/* ===== كشف وإصلاح عطل الحروف المركّبة (لا ← ال) في بعض ملفات PDF ===== */
+function ligBad(t){
+ return(
+  /(^|[^\u0621-\u064A])[وفبكلس]{0,2}ا(?:أل|إل|آل)/.test(t)||
+  /(^|[^\u0621-\u064A])[وفبكلس]{0,2}اال/.test(t)||
+  /(^|[^\u0621-\u064A])(?:ال|إال|أال|بال|كال|فال|وال)(?=[^\u0621-\u064A]|$)/.test(t)
+ );
+}
+
+const LIG_WHOLE={"ال":"لا","إال":"إلا","أال":"ألا","بال":"بلا","كال":"كلا","فال":"فلا","وال":"ولا"};
+
+function fixWord(w){
+ const m=w.match(/^([^\u0621-\u0652]*)([\u0621-\u0652]*)([\s\S]*)$/);
+ const head=m[1];
+ let core=m[2];
+ const tail=m[3];
+
+ if(!core)return w;
+
+ let mm;
+
+ if(LIG_WHOLE[core]){
+  core=LIG_WHOLE[core];
+ }else if((mm=core.match(/^([وفبكلس]{0,2})ا(أل|إل|آل)([\s\S]*)$/))){
+  core=mm[1]+"ا"+mm[2][1]+mm[2][0]+mm[3];
+ }else if((mm=core.match(/^([وف]?)أل(ن|نه|نها|نهم|نهن|نني|نك|نكم|جل|نفس[\s\S]*)$/))){
+  core=mm[1]+"لأ"+mm[2];
+ }
+
+ return head+core+tail;
+}
+
+function ligRepair(t){
+ return String(t||"").split("\n").map(line=>
+  line.split(" ").map(fixWord).join(" ")
+ ).join("\n");
+}
+
+/* ===== معالجة صورة الصفحة قبل OCR: رمادي ثم أبيض وأسود (Otsu) لإزالة النقوش ===== */
+function binarize(c){
+ const x=c.getContext("2d");
+ const im=x.getImageData(0,0,c.width,c.height);
+ const d=im.data;
+ const n=d.length/4;
+ const g=new Uint8Array(n);
+ const hist=new Uint32Array(256);
+
+ for(let i=0;i<n;i++){
+  const v=(d[4*i]*299+d[4*i+1]*587+d[4*i+2]*114)/1000|0;
+  g[i]=v;
+  hist[v]++;
+ }
+
+ let sum=0;
+ for(let i=0;i<256;i++)sum+=i*hist[i];
+
+ let sumB=0,wB=0,best=0,thr=128;
+
+ for(let i=0;i<256;i++){
+  wB+=hist[i];
+  if(!wB)continue;
+
+  const wF=n-wB;
+  if(!wF)break;
+
+  sumB+=i*hist[i];
+
+  const mB=sumB/wB;
+  const mF=(sum-sumB)/wF;
+  const v=wB*wF*(mB-mF)*(mB-mF);
+
+  if(v>best){best=v;thr=i}
+ }
+
+ thr=Math.round(thr*0.9);
+
+ for(let i=0;i<n;i++){
+  const o=g[i]>thr?255:0;
+  d[4*i]=o;
+  d[4*i+1]=o;
+  d[4*i+2]=o;
+  d[4*i+3]=255;
+ }
+
+ x.putImageData(im,0,0);
+}
+
+async function ocrPage(p,wk){
+ const v0=p.getViewport({scale:1});
+ const sc=Math.min(3,4000/Math.max(v0.width,v0.height));
+ const vp=p.getViewport({scale:sc});
+
+ const c=document.createElement("canvas");
+ c.width=Math.floor(vp.width);
+ c.height=Math.floor(vp.height);
+
+ const x=c.getContext("2d");
+ x.fillStyle="#fff";
+ x.fillRect(0,0,c.width,c.height);
+
+ await p.render({canvasContext:x,viewport:vp}).promise;
+
+ binarize(c);
+
+ const d=(await wk.recognize(c)).data;
+
+ c.width=1;
+ c.height=1;
+
+ /* نتجاهل الأسطر ضعيفة الثقة (غالباً زخارف أو خط تزييني) */
+ if(d.lines&&d.lines.length){
+  return d.lines
+   .filter(l=>l.text&&(l.confidence==null||l.confidence>=55))
+   .map(l=>l.text.replace(/\n/g," "))
+   .join("\n");
+ }
+
+ return d.text||"";
+}
+
+function askMode(){
+ const v=prompt(
+  "طريقة الاستخراج:\n"+
+  "1 = تلقائي (موصى به): نص PDF، وOCR للصفحات المصوّرة أو المعطوبة\n"+
+  "2 = OCR لكل الصفحات\n"+
+  "3 = نص PDF فقط (مع إصلاح جزئي للحروف المركّبة)",
+  "1"
+ );
+
+ if(v===null)return null;
+
+ const t=v.trim().replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632);
+
+ return t==="2"?"ocr":t==="3"?"text":"auto";
+}
+
+async function readPdf(pdf,range,onPage,mode){
+ mode=mode||"auto";
+
  const n=pdf.numPages;
  const a=range?range[0]:1;
  const b=range?range[1]:n;
 
  const pages=[];
- let wk=null,wl=null;
+ let wk=null,wl=null,nOcr=0,nFix=0;
 
  stopFlag=false;
 
@@ -2296,31 +2718,37 @@ async function readPdf(pdf,range,onPage){
 
    prog("الصفحة "+i+" ("+(i-a+1)+" من "+(b-a+1)+")");
 
-   let t=itemsText((await p.getTextContent()).items);
+   let layer="";
 
-   if(needOcr(t)){
-    prog("الصفحة "+i+": النص غير مقروء، تشغيل OCR...");
+   if(mode!=="ocr"){
+    try{
+     layer=cleanText(itemsText((await p.getTextContent()).items));
+    }catch(e){
+     console.error(e);
+    }
+   }
 
-    if(!wk)wk=await ocrWorker();
+   const noLayer=needOcr(layer);
+   const bad=!noLayer&&ligBad(layer);
+   const useOcr=mode==="ocr"||noLayer||(mode==="auto"&&bad);
 
-    const vp=p.getViewport({scale:2.5});
-    const c=document.createElement("canvas");
+   let t="";
 
-    c.width=vp.width;
-    c.height=vp.height;
-
-    await p.render({
-     canvasContext:c.getContext("2d"),
-     viewport:vp
-    }).promise;
-
-    t=(await wk.recognize(c)).data.text||"";
-
-    c.width=1;
-    c.height=1;
-
+   if(useOcr){
+    try{
+     prog("الصفحة "+i+": تشغيل OCR...");
+     if(!wk)wk=await ocrWorker("6");
+     t=cleanText(await ocrPage(p,wk));
+     nOcr++;
+    }catch(e){
+     console.error(e);
+     t=bad||noLayer?ligRepair(layer):layer;
+    }
+   }else if(bad){
+    t=ligRepair(layer);
+    nFix++;
    }else{
-    t=fixRev(t);
+    t=layer;
    }
 
    pages.push(t);
@@ -2340,10 +2768,24 @@ async function readPdf(pdf,range,onPage){
   }
  }
 
+ pages.info={ocr:nOcr,fix:nFix};
  return pages;
 }
 
+function infoNote(pages){
+ const f=pages&&pages.info;
+ if(!f)return"";
+
+ return(
+  (f.ocr?" — OCR لـ "+f.ocr+" صفحة":"")+
+  (f.fix?" — أُصلحت الحروف المركّبة جزئياً في "+f.fix+" صفحة، راجع النص":"")
+ );
+}
+
 async function extractPDF(f){
+ const mode=askMode();
+ if(!mode)return;
+
  showX();
  $("xt").value="";
  prog("جارٍ قراءة PDF...");
@@ -2352,16 +2794,18 @@ async function extractPDF(f){
   const pdf=await openPdf(f);
   const r=[1,pdf.numPages];
 
-  await readPdf(pdf,r,t=>{
+  const pages=await readPdf(pdf,r,t=>{
+   if(!t.trim())return;
+
    const x=$("xt");
    x.value+=(x.value?"\n\n":"")+t;
    x.scrollTop=x.scrollHeight;
-  });
+  },mode);
 
   prog(
-   stopFlag
+   (stopFlag
     ?"تم الإيقاف. النص المستخرج حتى الآن في الخانة."
-    :"اكتمل استخراج النص."
+    :"اكتمل استخراج النص.")+infoNote(pages)
   );
 
  }catch(e){
@@ -2433,8 +2877,11 @@ async function pdfToWord(inp){
  if(!f)return;
 
  if(!confirm(
-  "تحويل كل صفحات PDF إلى Word؟ سيُنشأ مستند جديد ويبقى الحالي محفوظاً. قد يستغرق وقتاً للكتب الكبيرة. يمكنك الضغط على إيقاف فيُصدَّر ما اكتمل منها. أبقِ الشاشة مفتوحة."
+  "تحويل صفحات PDF إلى Word نصاً فقط (بلا رموز أو زخارف أو صور)؟ سيُنشأ مستند جديد ويبقى الحالي محفوظاً. قد يستغرق وقتاً للكتب الكبيرة. يمكنك الضغط على إيقاف فيُصدَّر ما اكتمل منها. أبقِ الشاشة مفتوحة."
  ))return;
+
+ const mode=askMode();
+ if(!mode)return;
 
  try{
   prog("جارٍ التحويل...");
@@ -2445,18 +2892,26 @@ async function pdfToWord(inp){
   $("xt").value="";
 
   const pages=await readPdf(pdf,[1,pdf.numPages],t=>{
+   if(!t.trim())return;
+
    const x=$("xt");
    x.value+=(x.value?"\n\n":"")+t;
-  });
+  },mode);
 
-  if(!pages.length){
+  const html=pages
+   .filter(t=>t&&t.trim())
+   .map(t=>toParas(t))
+   .filter(Boolean)
+   .join('<div class="pb"></div>');
+
+  if(!html){
    prog("لم يُستخرج أي نص.");
    return;
   }
 
   if(!(await startFresh()))return;
 
-  page.innerHTML=pages.map(textHTML).join('<div class="pb"></div>');
+  page.innerHTML=html;
 
   title=f.name.replace(/\.pdf$/i,"")||"مستند من PDF";
   $("docTitle").textContent=title;
@@ -2465,7 +2920,7 @@ async function pdfToWord(inp){
   stats();
 
   if(await exportDOCX()){
-   prog("✓ تم التحويل وتنزيل ملف Word.");
+   prog("✓ تم التحويل وتنزيل ملف Word"+infoNote(pages));
   }
 
  }catch(e){
@@ -2488,9 +2943,9 @@ async function runOCR(inp){
  let w=null;
 
  try{
-  w=await ocrWorker();
+  w=await ocrWorker("3");
 
-  $("xt").value=(await w.recognize(f)).data.text||"";
+  $("xt").value=cleanText((await w.recognize(f)).data.text||"");
   prog("اكتمل OCR.");
 
  }catch(e){
@@ -2516,7 +2971,7 @@ async function moveX(){
 
  if(!(await startFresh()))return;
 
- page.innerHTML=textHTML(t);
+ page.innerHTML=toParas(t)||"<p><br></p>";
  title="نص مستخرج";
  $("docTitle").textContent=title;
 

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#126b55">
+<title>المحرر العربي الاحترافي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#edf1ef;--surface:#fff;--text:#202923;--line:#d8e0dc;--accent:#126b55;--soft:#e6f1ed;--muted:#68756e;--paper:#fff;--papertext:#171717;--danger:#b83232}
+[data-theme="dark"]{--bg:#121815;--surface:#1b241f;--text:#e5ebe7;--line:#344139;--accent:#19866b;--soft:#26372e;--muted:#a0aaa4;--paper:#171e1a;--papertext:#e5ebe7}
+[data-theme="sepia"]{--bg:#eee3ca;--surface:#f8efd9;--text:#3c3026;--line:#dfcfaa;--accent:#8c5830;--soft:#f1e2c2;--muted:#796957;--paper:#fff9eb;--papertext:#30251c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 Cairo,Tahoma,Arial,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation}
+header{background:var(--accent);color:#fff;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header h1{font-size:16px;margin:0}.author{font-size:11px;text-align:left;line-height:1.4}
+.toolbar{position:sticky;top:0;z-index:20;background:var(--surface);box-shadow:0 1px 5px #0002;padding:5px}
+.tools{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none}.tools::-webkit-scrollbar{display:none}
+.tools button,.tools select{flex:0 0 auto;min-height:36px;border:0;border-radius:5px;background:transparent;color:var(--text);padding:4px 9px}
+.tools button:hover,.tools select{background:var(--soft)}.tools select{max-width:145px;font-size:13px}
+.tools input[type=color]{width:34px;height:32px;border:0;background:none;padding:0}
+.menu{display:flex;gap:5px;flex-wrap:wrap;padding:4px 0}.menu button{border:0;border-radius:5px;padding:6px 10px;background:var(--soft);color:var(--text)}
+.workspace{padding:12px 8px;display:flex;justify-content:center}
+#page{width:794px;max-width:100%;min-height:78vh;background:var(--paper);color:var(--papertext);padding:57px;outline:0;box-shadow:0 1px 6px #0002;font:19px/2 Cairo,Tahoma,Arial,sans-serif;overflow-wrap:anywhere}
+#page:empty:before{content:"ابدأ الكتابة هنا...";color:#999;pointer-events:none}
+#page p{margin:0 0 12px}#page img{max-width:100%;height:auto;display:block;margin:16px auto}
+#page table{width:100%;border-collapse:collapse;margin:15px 0}#page td,#page th{border:1px solid var(--line);padding:7px;min-width:40px}
+#page blockquote{border-right:3px solid var(--line);margin:14px 0;padding:2px 14px;color:var(--muted)}
+#page ul,#page ol{padding-right:30px}#page .page-break{border-top:1px dashed #999;margin:25px 0;break-after:page;page-break-after:always}
+.statusbar{position:sticky;bottom:0;z-index:10;background:var(--surface);box-shadow:0 -1px 5px #0002;padding:6px 12px;display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.statusbar b{color:var(--text)}#status{margin-inline-start:auto;color:var(--accent);font-weight:700}
+.panel{max-width:850px;margin:10px auto;padding:12px;background:var(--surface);border-radius:7px;box-shadow:0 1px 5px #0002}
+.panel h3{margin:0 0 8px;color:var(--accent);font-size:15px}.panel button,.modal button{border:0;border-radius:5px;background:var(--soft);color:var(--text);padding:7px 12px;margin:3px;min-height:36px}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:12px}
+.modal-back{position:fixed;inset:0;z-index:50;background:#0008;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal{width:min(460px,100%);max-height:85vh;overflow:auto;background:var(--surface);color:var(--text);border-radius:9px;padding:15px}
+.modal h3{margin:0 0 10px}.modal input[type=text],.modal input[type=number]{width:100%;padding:9px;border:1px solid var(--line);border-radius:5px;background:var(--soft);color:var(--text);margin:5px 0}
+.font-row,.doc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:7px 0}
+[hidden]{display:none!important}
+@media(max-width:600px){#page{padding:20px;font-size:18px}.menu{flex-wrap:nowrap;overflow-x:auto}}
+@media print{
+ @page{size:A4;margin:15mm}
+ html,body{background:#fff!important;color:#000!important}
+ header,.toolbar,.statusbar,.footer,.panel,.modal-back{display:none!important}
+ .workspace{display:block;padding:0}
+ #page{width:auto!important;max-width:none!important;min-height:0!important;padding:0!important;margin:0!important;box-shadow:none!important;background:#fff!important;color:#000!important}
+ #page img{max-width:100%!important;break-inside:avoid}
+ #page tr{break-inside:avoid}
+}
+</style>
+</head>
+<body data-theme="light">
+<header>
+ <h1>✍️ المحرر العربي الاحترافي</h1>
+ <div class="author">إعداد وتطوير<br><b>محمد علي أحمد الحطاب</b></div>
+</header>
+
+<nav class="toolbar">
+ <div class="menu" id="mainMenu">
+  <button onclick="newDocument()">مستند جديد</button>
+  <button onclick="showDocuments()">مستنداتي</button>
+  <button onclick="saveDocument()">حفظ الآن</button>
+  <button onclick="renameDocument()">تسمية المستند</button>
+  <button onclick="document.getElementById('importFile').click()">فتح ملف Word أو TXT</button>
+  <button onclick="window.print()">طباعة / حفظ PDF</button>
+  <button onclick="exportWord()">تصدير Word</button>
+  <button onclick="document.getElementById('imageFile').click()">إضافة صورة</button>
+  <button onclick="document.getElementById('pdfFile').click()">قراءة PDF</button>
+  <button onclick="document.getElementById('ocrFile').click()">استخراج نص من صورة</button>
+  <button onclick="manageFonts()">إدارة الخطوط</button>
+  <button onclick="setTheme('light')">نهاري</button>
+  <button onclick="setTheme('sepia')">ورقي</button>
+  <button onclick="setTheme('dark')">داكن</button>
+ </div>
+ <div class="tools" id="formatTools">
+  <button title="تراجع" onclick="edit('undo')">↶</button><button title="إعادة" onclick="edit('redo')">↷</button>
+  <select id="fontSelect" title="نوع الخط" onchange="chooseFont(this.value)">
+   <option value="">اختر الخط</option>
+   <option>Cairo</option><option>Amiri</option><option>Tahoma</option><option>Arial</option>
+   <option>Traditional Arabic</option><option> Simplified Arabic</option><option>Georgia</option><option>Times New Roman</option>
+  </select>
+  <button onclick="manageFonts()">＋ إضافة خط</button>
+  <select title="حجم الخط" onchange="setFontSize(this.value)">
+   <option value="">حجم الخط</option><option value="14px">14 صغير</option><option value="16px">16</option>
+   <option value="18px">18</option><option value="20px">20</option><option value="24px">24 كبير</option>
+   <option value="28px">28</option><option value="32px">32 عنوان</option><option value="40px">40</option>
+  </select>
+  <button onclick="edit('bold')"><b>B</b></button><button onclick="edit('italic')"><i>I</i></button>
+  <button onclick="edit('underline')"><u>U</u></button><button onclick="edit('strikeThrough')"><s>S</s></button>
+  <label title="لون النص"><input type="color" value="#111111" onchange="edit('foreColor',this.value)"></label>
+  <label title="تمييز النص"><input type="color" value="#fff176" onchange="edit('hiliteColor',this.value)"></label>
+  <button onclick="edit('justifyRight')">يمين</button><button onclick="edit('justifyCenter')">وسط</button>
+  <button onclick="edit('justifyLeft')">يسار</button><button onclick="edit('justifyFull')">ضبط</button>
+  <button onclick="edit('insertUnorderedList')">• قائمة</button><button onclick="edit('insertOrderedList')">١. قائمة</button>
+  <button onclick="insertTable()">جدول</button><button onclick="insertLink()">رابط</button>
+  <button onclick="insertPageBreak()">فاصل صفحة</button>
+  <button onclick="findReplace()">بحث</button>
+ </div>
+</nav>
+
+<input id="importFile" type="file" accept=".docx,.txt" hidden>
+<input id="imageFile" type="file" accept="image/*" multiple hidden>
+<input id="pdfFile" type="file" accept=".pdf,application/pdf" hidden>
+<input id="ocrFile" type="file" accept="image/*" hidden>
+<input id="fontFile" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+
+<main class="workspace"><div id="page" contenteditable="true" spellcheck="true" dir="rtl"><p><br></p></div></main>
+<div class="statusbar">
+ <span id="docTitle">مستند جديد</span><span>الكلمات: <b id="words">0</b></span>
+ <span>الحروف: <b id="chars">0</b></span><span id="status">جاهز</span>
+</div>
+<section class="panel" id="extractPanel" hidden>
+ <h3>النص المستخرج</h3><textarea id="extractedText" dir="auto" style="width:100%;min-height:150px;background:var(--soft);color:var(--text);border:0;padding:9px"></textarea>
+ <button onclick="moveExtractedText()">نقل النص إلى المحرر</button><button onclick="downloadExtracted()">تنزيل TXT</button>
+ <button onclick="document.getElementById('extractPanel').hidden=true">إغلاق</button>
+</section>
+<footer class="footer">المحرر العربي الاحترافي للمستندات<br>تصميم وإعداد وتطوير: محمد علي أحمد الحطاب · إهداء مجاني</footer>
+<div id="modalHost"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const page=$("page");
+const DB_NAME="ArabicProDocsDB", DOCS="documents", FONTS_STORE="fonts";
+let currentId=null,docTitle="مستند جديد",saveTimer=null,revision=0,savedRevision=0;
+let savedRange=null,customFonts=[],fontUrls=new Map(),selectedImage=null;
+let pdfStop=false;
+
+function setStatus(t){$("status").textContent=t}
+function safeName(){return (docTitle||"مستندي").replace(/[\\/:*?"<>|]/g,"_").slice(0,90)}
+function setTheme(t){document.body.dataset.theme=t;try{localStorage.setItem("ape-theme",t)}catch(e){}}
+function openDB(){
+ return new Promise((resolve,reject)=>{
+  const req=indexedDB.open(DB_NAME,2);
+  req.onupgradeneeded=()=>{
+   const db=req.result;
+   if(!db.objectStoreNames.contains(DOCS))db.createObjectStore(DOCS,{keyPath:"id"});
+   if(!db.objectStoreNames.contains(FONTS_STORE))db.createObjectStore(FONTS_STORE,{keyPath:"name"});
+  };
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+}
+async function dbRequest(store,mode,action){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,mode),req=action(tx.objectStore(store));
+  let result;
+  if(req){req.onsuccess=()=>result=req.result;req.onerror=()=>reject(req.error)}
+  tx.oncomplete=()=>{db.close();resolve(result)};
+  tx.onerror=()=>{db.close();reject(tx.error)};
+  tx.onabort=()=>{db.close();reject(tx.error)};
+ });
+}
+const putDoc=d=>dbRequest(DOCS,"readwrite",s=>s.put(d));
+const getDoc=id=>dbRequest(DOCS,"readonly",s=>s.get(id));
+const delDoc=id=>dbRequest(DOCS,"readwrite",s=>s.delete(id));
+const allDocs=()=>dbRequest(DOCS,"readonly",s=>s.getAll());
+const putFont=f=>dbRequest(FONTS_STORE,"readwrite",s=>s.put(f));
+const delFont=n=>dbRequest(FONTS_STORE,"readwrite",s=>s.delete(n));
+const allFonts=()=>dbRequest(FONTS_STORE,"readonly",s=>s.getAll());
+
+function scheduleSave(){
+ revision++;setStatus("جارٍ الحفظ...");
+ clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveDocument(true),800);
+}
+async function saveDocument(silent=false){
+ clearTimeout(saveTimer);saveTimer=null;
+ if(!currentId)currentId="doc_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+ const record={id:currentId,title:docTitle,html:page.innerHTML,updated:Date.now()};
+ try{
+  await putDoc(record);savedRevision=revision;setStatus("تم الحفظ على الجهاز");
+  if(!silent)alert("تم حفظ المستند على هذا الجهاز.");
+  return true;
+ }catch(e){console.error(e);setStatus("تعذر الحفظ");if(!silent)alert("تعذر الحفظ. تحقق من مساحة التخزين.");return false}
+}
+async function flush(){clearTimeout(saveTimer);saveTimer=null;if(savedRevision>=revision)return true;return saveDocument(true)}
+function setDocument(d){
+ currentId=d.id;docTitle=d.title||"مستند بلا عنوان";
+ page.innerHTML=sanitize(d.html||"")||"<p><br></p>";
+ $("docTitle").textContent=docTitle;revision++;savedRevision=revision;updateCounts();
+}
+async function newDocument(){
+ if(!confirm("إنشاء مستند جديد؟ سيتم حفظ المستند الحالي أولاً."))return;
+ if(!(await flush()))return alert("تعذر حفظ المستند الحالي.");
+ currentId=null;docTitle="مستند جديد";page.innerHTML="<p><br></p>";
+ $("docTitle").textContent=docTitle;revision++;savedRevision=revision;updateCounts();page.focus();
+}
+async function renameDocument(){
+ const v=prompt("اكتب اسم المستند:",docTitle);if(!v||!v.trim())return;
+ docTitle=v.trim();$("docTitle").textContent=docTitle;revision++;await saveDocument(true);
+}
+async function showDocuments(){
+ if(!(await flush()))return alert("تعذر حفظ المستند الحالي.");
+ const docs=(await allDocs()).sort((a,b)=>b.updated-a.updated);
+ const host=$("modalHost");host.innerHTML="";
+ const back=document.createElement("div");back.className="modal-back";back.onclick=e=>{if(e.target===back)closeModal()};
+ const box=document.createElement("div");box.className="modal";box.innerHTML="<h3>مستنداتي المحفوظة</h3>";
+ if(!docs.length)box.innerHTML+="<p>لا توجد مستندات محفوظة حتى الآن.</p>";
+ docs.forEach(d=>{
+  const row=document.createElement("div");row.className="doc-row";
+  const info=document.createElement("span");info.textContent=(d.title||"بلا عنوان")+" — "+new Date(d.updated).toLocaleString("ar-IQ");
+  const actions=document.createElement("span");
+  const open=document.createElement("button");open.textContent="فتح";open.onclick=async()=>{const x=await getDoc(d.id);if(x){setDocument(x);closeModal();setStatus("تم فتح المستند")}};
+  const del=document.createElement("button");del.textContent="حذف";del.onclick=async()=>{if(confirm("حذف المستند نهائياً؟")){await delDoc(d.id);if(currentId===d.id){currentId=null;docTitle="مستند جديد";page.innerHTML="<p><br></p>";$("docTitle").textContent=docTitle;revision++;savedRevision=revision}showDocuments()}};
+  actions.append(open,del);row.append(info,actions);box.append(row);
+ });
+ const close=document.createElement("button");close.textContent="إغلاق";close.onclick=closeModal;box.append(close);back.append(box);host.append(back);
+}
+function closeModal(){$("modalHost").innerHTML=""}
+
+const SAFE_TAGS=new Set("p br b strong i em u s strike del ins sub sup mark small span div h1 h2 h3 h4 h5 h6 ul ol li table thead tbody tfoot tr td th blockquote pre code hr img a".split(" "));
+function sanitize(html){
+ const d=new DOMParser().parseFromString(String(html),"text/html");
+ d.querySelectorAll("script,style,iframe,object,embed,form,meta,link,svg,video,audio,canvas,input,button").forEach(x=>x.remove());
+ [...d.body.querySelectorAll("*")].forEach(el=>{
+  const tag=el.tagName.toLowerCase();
+  if(!SAFE_TAGS.has(tag)){el.replaceWith(...el.childNodes);return}
+  [...el.attributes].forEach(a=>{
+   const n=a.name.toLowerCase(),v=a.value.trim();
+   if(n.startsWith("on")||!["style","dir","lang","title","href","src","alt","width","height","colspan","rowspan","class"].includes(n)){el.removeAttribute(a.name);return}
+   if(n==="href"&&!/^(https?:|mailto:|tel:|#)/i.test(v))el.removeAttribute(a.name);
+   if(n==="src"&&!/^(https:|data:image\/(png|jpeg|jpg|gif|webp);base64,)/i.test(v))el.removeAttribute(a.name);
+   if(n==="class"&&v!=="page-break")el.removeAttribute(a.name);
+   if(n==="style"&&/url\s*\(|expression|javascript|position\s*:/i.test(v))el.removeAttribute(a.name);
+  });
+ });
+ return d.body.innerHTML;
+}
+function rememberSelection(){
+ const s=getSelection();if(s&&s.rangeCount&&page.contains(s.anchorNode)&&page.contains(s.focusNode))savedRange=s.getRangeAt(0).cloneRange();
+}
+document.addEventListener("selectionchange",rememberSelection);
+function restoreSelection(){
+ page.focus();if(savedRange){try{const s=getSelection();s.removeAllRanges();s.addRange(savedRange)}catch(e){savedRange=null}}
+}
+function edit(command,value=null){
+ restoreSelection();document.execCommand("styleWithCSS",false,true);document.execCommand(command,false,value);updateCounts();scheduleSave();
+}
+function chooseFont(name){
+ if(!name)return;restoreSelection();document.execCommand("fontName",false,name);scheduleSave();
+}
+function setFontSize(size){
+ if(!size)return;restoreSelection();
+ const s=getSelection();if(!s||!s.rangeCount||!page.contains(s.anchorNode))return alert("حدد النص أولاً ثم اختر حجمه.");
+ if(s.isCollapsed){const n=s.anchorNode.nodeType===3?s.anchorNode.parentElement:s.anchorNode;const block=n.closest("p,h1,h2,h3,li,td,th,div");if(!block)return alert("حدد النص أولاً.");const r=document.createRange();r.selectNodeContents(block);s.removeAllRanges();s.addRange(r)}
+ document.execCommand("styleWithCSS",false,true);document.execCommand("fontSize",false,"7");
+ page.querySelectorAll('font[size="7"]').forEach(f=>{const span=document.createElement("span");span.style.fontSize=size;span.append(...f.childNodes);f.replaceWith(span)});
+ scheduleSave();
+}
+function insertTable(){
+ const r=Number(prompt("عدد الصفوف (1–25):","3")),c=Number(prompt("عدد الأعمدة (1–12):","3"));
+ if(!Number.isInteger(r)||!Number.isInteger(c)||r<1||r>25||c<1||c>12)return alert("أدخل أعداداً صحيحة ضمن الحدود.");
+ let h="<table><tbody>";for(let i=0;i<r;i++){h+="<tr>";for(let j=0;j<c;j++)h+=i?"<td>خلية</td>":"<th>عنوان</th>";h+="</tr>"}h+="</tbody></table><p><br></p>";
+ restoreSelection();document.execCommand("insertHTML",false,h);scheduleSave();
+}
+function insertLink(){
+ restoreSelection();let u=prompt("أدخل عنوان الرابط:","https://");if(!u)return;
+ if(!/^(https?:|mailto:|tel:)/i.test(u))u="https://"+u;
+ edit("createLink",u);
+}
+function insertPageBreak(){restoreSelection();document.execCommand("insertHTML",false,'<div class="page-break"></div><p><br></p>');scheduleSave()}
+function findReplace(){
+ const q=prompt("اكتب النص الذي تريد البحث عنه:");if(!q)return;
+ const replacement=prompt("استبدال النص بـ (اتركه فارغاً للحذف):","");
+ if(replacement===null)return;
+ const walker=document.createTreeWalker(page,NodeFilter.SHOW_TEXT);const nodes=[];let n;
+ while(n=walker.nextNode())if(n.textContent.includes(q))nodes.push(n);
+ let count=0;
+ nodes.forEach(node=>{const value=node.textContent;let pos=value.indexOf(q);if(pos<0)return;const frag=document.createDocumentFragment();let from=0;while(pos>=0){frag.append(document.createTextNode(value.slice(from,pos)));if(replacement)frag.append(document.createTextNode(replacement));from=pos+q.length;count++;pos=value.indexOf(q,from)}frag.append(document.createTextNode(value.slice(from)));node.replaceWith(frag)});
+ updateCounts();scheduleSave();alert("عدد المواضع التي استُبدلت: "+count);
+}
+function updateCounts(){
+ const t=page.innerText||"",trim=t.trim();
+ $("words").textContent=trim?trim.split(/\s+/).length:0;
+ $("chars").textContent=t.replace(/\s/g,"").length;
+}
+page.addEventListener("input",()=>{updateCounts();scheduleSave()});
+page.addEventListener("click",e=>{selectedImage=e.target.tagName==="IMG"?e.target:null});
+page.addEventListener("paste",e=>{
+ e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData("text/plain");
+ if(t)document.execCommand("insertText",false,t);
+});
+function download(blob,name){
+ const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),15000);
+}
+function textToHtml(t){return t.split(/\r?\n/).map(x=>"<p>"+escapeHtml(x||"")+"</p>").join("")}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function importDocument(input){
+ const f=input.files[0];input.value="";if(!f)return;
+ if(!confirm("سيُفتح الملف كمستند جديد بعد حفظ المستند الحالي. متابعة؟"))return;
+ try{
+  let html="";
+  if(/\.txt$/i.test(f.name))html=textToHtml(await f.text());
+  else if(/\.docx$/i.test(f.name)){
+   if(!window.mammoth)throw new Error("مكتبة قراءة Word غير متاحة");
+   const result=await mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});html=sanitize(result.value);
+  }else return alert("الملفات المدعومة هنا هي Word بصيغة DOCX وTXT فقط.");
+  if(!(await flush()))return alert("تعذر حفظ المستند الحالي.");
+  currentId=null;docTitle=f.name.replace(/\.[^.]+$/,"")||"مستند مستورد";page.innerHTML=html||"<p><br></p>";
+  $("docTitle").textContent=docTitle;updateCounts();scheduleSave();setStatus("تم فتح الملف");
+ }catch(e){console.error(e);alert("تعذر فتح الملف: "+e.message)}
+}
+$("importFile").addEventListener("change",function(){importDocument(this)});
+$("imageFile").addEventListener("change",async function(){
+ const files=[...this.files];this.value="";
+ for(const f of files){if(!f.type.startsWith("image/"))continue;if(f.size>8*1024*1024){alert("الصورة أكبر من 8 ميغابايت: "+f.name);continue}
+  const reader=new FileReader();reader.onload=()=>{restoreSelection();document.execCommand("insertHTML",false,'<img src="'+reader.result+'" alt="'+escapeHtml(f.name)+'"><p><br></p>');scheduleSave()};reader.readAsDataURL(f);
+ }
+});
+async function exportWord(){
+ if(!window.docx||!window.docx.Document)return alert("تعذر تحميل مكتبة Word. تحقق من اتصال الإنترنت ثم أعد المحاولة.");
+ setStatus("جارٍ إنشاء ملف Word...");
+ try{
+  const {Document,Paragraph,TextRun,Packer,HeadingLevel}=window.docx;
+  const children=[];
+  const walk=async node=>{
+   for(const el of node.childNodes){
+    if(el.nodeType===3){if(el.textContent.trim())children.push(new Paragraph({children:[new TextRun(el.textContent)]}));continue}
+    if(el.nodeType!==1)continue;
+    const tag=el.tagName.toLowerCase();
+    if(/^h[1-3]$/.test(tag)){children.push(new Paragraph({text:el.innerText,heading:tag==="h1"?HeadingLevel.HEADING_1:tag==="h2"?HeadingLevel.HEADING_2:HeadingLevel.HEADING_3,bidirectional:true}));}
+    else if(tag==="p"||tag==="blockquote"||tag==="li"){children.push(new Paragraph({children:[new TextRun({text:el.innerText||"",bold:tag==="blockquote"})],bidirectional:true,bullet:tag==="li"?{level:0}:undefined}));}
+    else if(tag==="br")children.push(new Paragraph({text:""}));
+    else if(tag==="table"){for(const tr of el.querySelectorAll("tr"))children.push(new Paragraph({text:[...tr.children].map(c=>c.innerText).join(" | "),bidirectional:true}))}
+    else await walk(el);
+   }
+  };
+  await walk(page);
+  if(!children.length)children.push(new Paragraph({text:""}));
+  const doc=new Document({sections:[{properties:{page:{margin:{top:850,bottom:850,left:850,right:850}}},children}]});
+  download(await Packer.toBlob(doc),safeName()+".docx");setStatus("تم إنشاء ملف Word");
+ }catch(e){console.error(e);setStatus("تعذر تصدير Word");alert("تعذر إنشاء ملف Word.")}
+}
+async function loadFonts(){
+ try{customFonts=await allFonts()}catch(e){customFonts=[]}
+ customFonts.forEach(f=>applyCustomFont(f));
+}
+function applyCustomFont(f){
+ try{
+  if(fontUrls.has(f.name))return;
+  const url=URL.createObjectURL(new Blob([f.data],{type:f.type||"font/ttf"}));
+  const face=new FontFace(f.name,'url("'+url+'")');face.load().then(loaded=>{document.fonts.add(loaded);fontUrls.set(f.name,url);refreshFontSelect()}).catch(e=>console.error(e));
+ }catch(e){console.error(e)}
+}
+function refreshFontSelect(){
+ const s=$("fontSelect"),existing=new Set([...s.options].map(o=>o.value));
+ customFonts.forEach(f=>{if(!existing.has(f.name)){const o=document.createElement("option");o.value=f.name;o.textContent=f.name+" (مضاف)";s.append(o)}});
+}
+function manageFonts(){
+ const host=$("modalHost");host.innerHTML="";
+ const back=document.createElement("div");back.className="modal-back";back.onclick=e=>{if(e.target===back)closeModal()};
+ const box=document.createElement("div");box.className="modal";
+ box.innerHTML="<h3>إدارة الخطوط</h3><p>أضف ملف خط من جهازك بصيغة TTF أو OTF أو WOFF أو WOFF2. سيُحفظ الخط في هذا المتصفح.</p>";
+ const add=document.createElement("button");add.textContent="＋ إضافة خط من الجهاز";add.onclick=()=>{$("fontFile").click();closeModal()};box.append(add);
+ if(!customFonts.length)box.innerHTML+="<p>لم تتم إضافة خطوط مخصصة بعد.</p>";
+ customFonts.forEach(f=>{
+  const row=document.createElement("div");row.className="font-row";
+  const name=document.createElement("span");name.textContent=f.name;name.style.fontFamily='"'+f.name+'"';
+  const del=document.createElement("button");del.textContent="حذف";del.onclick=async()=>{if(!confirm("حذف الخط "+f.name+" من قائمة الخطوط؟"))return;await delFont(f.name);customFonts=customFonts.filter(x=>x.name!==f.name);if(fontUrls.has(f.name)){URL.revokeObjectURL(fontUrls.get(f.name));fontUrls.delete(f.name)}document.fonts.forEach(face=>{if(face.family===f.name)document.fonts.delete(face)});refreshFontSelect();manageFonts()};
+  row.append(name,del);box.append(row);
+ });
+ const close=document.createElement("button");close.textContent="إغلاق";close.onclick=closeModal;box.append(close);back.append(box);host.append(back);
+}
+$("fontFile").addEventListener("change",async function(){
+ const f=this.files[0];this.value="";if(!f)return;
+ const name=prompt("اسم الخط الذي سيظهر في القائمة:",f.name.replace(/\.[^.]+$/,""));if(!name||!name.trim())return;
+ try{
+  const data=await f.arrayBuffer();const record={name:name.trim(),data,type:f.type||"font/ttf"};
+  await putFont(record);customFonts=customFonts.filter(x=>x.name!==record.name);customFonts.push(record);applyCustomFont(record);refreshFontSelect();alert("تمت إضافة الخط. اختره من قائمة الخطوط.");
+ }catch(e){console.error(e);alert("تعذرت إضافة الخط. قد تكون مساحة التخزين غير كافية.")}
+});
+async function readPdf(file){
+ if(!window.pdfjsLib)return alert("مكتبة قراءة PDF غير متاحة. تحقق من الإنترنت.");
+ try{
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  let text="";
+  for(let i=1;i<=pdf.numPages;i++){
+   setStatus("قراءة صفحة PDF "+i+" من "+pdf.numPages);
+   const p=await pdf.getPage(i),content=await p.getTextContent();
+   text+=content.items.map(x=>x.str).join(" ")+"\n\n";
+  }
+  $("extractPanel").hidden=false;$("extractedText").value=text.trim();$("extractPanel").scrollIntoView({behavior:"smooth"});
+  setStatus("اكتملت قراءة PDF");
+ }catch(e){console.error(e);alert("تعذرت قراءة ملف PDF.")}
+}
+$("pdfFile").addEventListener("change",function(){const f=this.files[0];this.value="";if(f)readPdf(f)});
+$("ocrFile").addEventListener("change",async function(){
+ const f=this.files[0];this.value="";if(!f)return;
+ if(!window.Tesseract)return alert("مكتبة OCR غير متاحة. تحقق من الإنترنت.");
+ $("extractPanel").hidden=false;$("extractedText").value="";setStatus("جارٍ التعرف على النص...");
+ try{
+  const result=await Tesseract.recognize(f,"ara+eng",{logger:m=>{if(m.status==="recognizing text")setStatus("التعرف على النص "+Math.round(m.progress*100)+"%")}});
+  $("extractedText").value=result.data.text||"";setStatus("اكتمل استخراج النص");
+ }catch(e){console.error(e);alert("تعذر استخراج النص من الصورة.")}
+});
+function moveExtractedText(){
+ const t=$("extractedText").value;if(!t.trim())return alert("لا يوجد نص لنقله.");
+ if(!confirm("سيُستبدل محتوى المحرر بالنص المستخرج. هل تريد المتابعة؟"))return;
+ page.innerHTML=textToHtml(t);$("extractPanel").hidden=true;updateCounts();scheduleSave();
+}
+function downloadExtracted(){download(new Blob(["\ufeff"+$("extractedText").value],{type:"text/plain;charset=utf-8"}),"النص_المستخرج.txt")}
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveDocument()}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flush()});
+window.addEventListener("pagehide",()=>{flush()});
+(async function init(){
+ try{const theme=localStorage.getItem("ape-theme");if(["light","dark","sepia"].includes(theme))setTheme(theme)}catch(e){}
+ try{
+  await loadFonts();
+  const docs=await allDocs();
+  if(docs.length){docs.sort((a,b)=>b.updated-a.updated);const latest=await getDoc(docs[0].id);if(latest)setDocument(latest)}
+  else updateCounts();
+  setStatus("جاهز للكتابة");
+ }catch(e){console.error(e);updateCounts();setStatus("جاهز — الحفظ المحلي غير متاح")}
+})();
+</script>
+</body>
+</html>
